@@ -1,0 +1,31 @@
+# motspilot runtime state (generated per-project, not part of the tool)
+.motspilot/workspace/tasks/
+.motspilot/workspace/archive/
+.motspilot/current_task
+.motspilot/logs/
+.motspilot/config
+.motspilot/notify.html
+
+# Claude Code IDE settings
+.claude/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor configs
+.vscode/
+.idea/
+.cursorrules
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.*
+
+# Research / internal docs (keep backup, not for public)
+RESEARCH_PUBLIC_RELEASE.md
+.motspilot/workspace/TASK_SEQUENCE.md
