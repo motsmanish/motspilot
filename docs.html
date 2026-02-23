@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>motspilot — Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #7c6ff7;
+            --accent-light: #a89df5;
+            --surface: #1a1d23;
+            --surface-2: #22262e;
+            --surface-3: #2a2f38;
+            --border: #333942;
+            --text-muted: #8b929a;
+        }
+        body {
+            background: #0f1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .navbar {
+            background: var(--surface) !important;
+            border-bottom: 1px solid var(--border);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .navbar-brand span {
+            color: var(--accent-light);
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a1040 0%, #0f1117 50%, #0a1628 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 3rem 0;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        .hero .badge-pill {
+            background: rgba(124, 111, 247, 0.15);
+            color: var(--accent-light);
+            border: 1px solid rgba(124, 111, 247, 0.3);
+            font-weight: 500;
+        }
+        .nav-pills .nav-link {
+            color: var(--text-muted);
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link:hover {
+            color: #e6e8eb;
+            background: var(--surface-3);
+        }
+        .nav-pills .nav-link.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .card-header {
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .phase-card {
+            border-left: 3px solid var(--accent);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .phase-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .phase-card .phase-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .code-block {
+            background: #161b22;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+        .code-block .prompt {
+            color: var(--accent-light);
+            user-select: none;
+        }
+        .code-block .comment {
+            color: #6a737d;
+        }
+        .pipeline-flow {
+            display: flex;
+            gap: 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .pipeline-flow .stage {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        .pipeline-flow .arrow {
+            color: var(--text-muted);
+            padding: 0 0.3rem;
+            font-size: 1.2rem;
+        }
+        .table-custom {
+            --bs-table-bg: transparent;
+            --bs-table-border-color: var(--border);
+        }
+        .table-custom thead th {
+            background: var(--surface-2);
+            color: #e6e8eb;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .table-custom td {
+            vertical-align: middle;
+            font-size: 0.9rem;
+        }
+        .badge-yes { background: rgba(63, 185, 80, 0.15); color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.3); }
+        .badge-no { background: rgba(139, 146, 154, 0.1); color: var(--text-muted); border: 1px solid var(--border); }
+        .principle-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .config-key {
+            color: #79c0ff;
+            font-family: monospace;
+            font-weight: 600;
+        }
+        .config-val {
+            color: #a5d6ff;
+            font-family: monospace;
+        }
+        .file-tree {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+        .file-tree .folder { color: #79c0ff; }
+        .file-tree .file { color: #c9d1d9; }
+        .file-tree .desc { color: #6a737d; }
+        .thinking-section {
+            border-left: 3px solid var(--border);
+            padding-left: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .thinking-section:hover {
+            border-left-color: var(--accent);
+        }
+        .thinking-section h5 {
+            color: #e6e8eb;
+            font-weight: 600;
+        }
+        .lifecycle-step {
+            position: relative;
+            padding-left: 2.5rem;
+            padding-bottom: 1.5rem;
+        }
+        .lifecycle-step::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        .lifecycle-step:last-child::before {
+            display: none;
+        }
+        .lifecycle-step .step-dot {
+            position: absolute;
+            left: 8px;
+            top: 6px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 3px solid var(--surface);
+        }
+        .tab-content { padding-top: 2rem; }
+        kbd {
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.8rem;
+        }
+        .accordion-button {
+            background: var(--surface-2);
+            color: #c9d1d9;
+            font-weight: 600;
+            border: none;
+            box-shadow: none;
+        }
+        .accordion-button:not(.collapsed) {
+            background: var(--surface-3);
+            color: var(--accent-light);
+        }
+        .accordion-button::after {
+            filter: invert(0.7);
+        }
+        .accordion-body {
+            background: var(--surface);
+        }
+        .accordion-item {
+            background: transparent;
+            border-color: var(--border);
+        }
+        /* Raw Files tab */
+        .rawfiles-layout {
+            display: flex;
+            gap: 1.5rem;
+            min-height: 600px;
+        }
+        .rawfiles-sidebar {
+            width: 260px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 0;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        .rawfiles-sidebar .sidebar-heading {
+            padding: 0 1rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+        .rawfiles-sidebar .file-link {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            cursor: pointer;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .rawfiles-sidebar .file-link:hover {
+            color: #e6e8eb;
+            background: var(--surface-2);
+        }
+        .rawfiles-sidebar .file-link.active {
+            color: var(--accent-light);
+            background: var(--surface-2);
+            border-left-color: var(--accent);
+        }
+        .rawfiles-sidebar .file-link .file-dir {
+            color: #6a737d;
+            font-size: 0.75rem;
+        }
+        .rawfiles-reader {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        .rawfiles-reader .loading-msg {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Rendered markdown styling */
+        .md-rendered h1, .md-rendered h2, .md-rendered h3,
+        .md-rendered h4, .md-rendered h5, .md-rendered h6 {
+            color: #e6e8eb;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+        .md-rendered h1 { font-size: 1.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+        .md-rendered h2 { font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
+        .md-rendered h3 { font-size: 1.2rem; }
+        .md-rendered h4 { font-size: 1.05rem; }
+        .md-rendered p { margin-bottom: 1em; line-height: 1.7; }
+        .md-rendered a { color: var(--accent-light); text-decoration: underline; }
+        .md-rendered a:hover { color: #fff; }
+        .md-rendered ul, .md-rendered ol { margin-bottom: 1em; padding-left: 1.5em; }
+        .md-rendered li { margin-bottom: 0.3em; line-height: 1.6; }
+        .md-rendered blockquote {
+            border-left: 3px solid var(--accent);
+            padding: 0.5rem 1rem;
+            margin: 1em 0;
+            background: var(--surface-2);
+            border-radius: 0 8px 8px 0;
+            color: var(--text-muted);
+        }
+        .md-rendered code {
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.85em;
+            color: #79c0ff;
+        }
+        .md-rendered pre {
+            background: #161b22;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+        .md-rendered pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #c9d1d9;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .md-rendered table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        .md-rendered table th {
+            background: var(--surface-2);
+            color: #e6e8eb;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--accent);
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+        }
+        .md-rendered table td {
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+            vertical-align: top;
+        }
+        .md-rendered table tr:hover td {
+            background: var(--surface-2);
+        }
+        .md-rendered hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2em 0;
+        }
+        .md-rendered strong { color: #e6e8eb; }
+        .md-rendered img { max-width: 100%; border-radius: 8px; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8rem; }
+            .nav-pills { flex-wrap: nowrap; overflow-x: auto; }
+            .pipeline-flow .arrow { display: none; }
+            .pipeline-flow .stage { margin-bottom: 0.25rem; }
+            .rawfiles-layout { flex-direction: column; }
+            .rawfiles-sidebar { width: 100%; max-height: 200px; }
+            .rawfiles-reader { max-height: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-rocket-takeoff me-2" style="color: var(--accent)"></i>
+            <span>mots</span>pilot
+        </a>
+        <span class="text-muted small d-none d-md-inline">AI-Powered Dev Pipeline by MOTSTECH</span>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <h1 class="mb-3">motspilot Documentation</h1>
+        <p class="lead text-muted mb-3">
+            5-phase AI pipeline for building features in existing codebases — safely, with human approval at every step.
+        </p>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="badge badge-pill px-3 py-2">Framework-Agnostic</span>
+            <span class="badge badge-pill px-3 py-2">Security-First</span>
+            <span class="badge badge-pill px-3 py-2">Human-in-the-Loop</span>
+            <span class="badge badge-pill px-3 py-2">Checkpoint & Resume</span>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="container py-4">
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills mb-2 flex-nowrap" id="mainTabs" role="tablist" style="overflow-x:auto;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button" role="tab">
+                <i class="bi bi-grid me-1"></i> Overview
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="workflow-tab" data-bs-toggle="pill" data-bs-target="#workflow" type="button" role="tab">
+                <i class="bi bi-arrow-repeat me-1"></i> Workflow
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="phases-tab" data-bs-toggle="pill" data-bs-target="#phases" type="button" role="tab">
+                <i class="bi bi-layers me-1"></i> Phases
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="config-tab" data-bs-toggle="pill" data-bs-target="#config" type="button" role="tab">
+                <i class="bi bi-gear me-1"></i> Configuration
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="commands-tab" data-bs-toggle="pill" data-bs-target="#commands" type="button" role="tab">
+                <i class="bi bi-terminal me-1"></i> Commands
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="frameworks-tab" data-bs-toggle="pill" data-bs-target="#frameworks" type="button" role="tab">
+                <i class="bi bi-puzzle me-1"></i> Frameworks
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="philosophy-tab" data-bs-toggle="pill" data-bs-target="#philosophy" type="button" role="tab">
+                <i class="bi bi-lightbulb me-1"></i> Philosophy
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="rawfiles-tab" data-bs-toggle="pill" data-bs-target="#rawfiles" type="button" role="tab">
+                <i class="bi bi-file-earmark-text me-1"></i> Raw Files
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="mainTabContent">
+
+        <!-- ============ OVERVIEW ============ -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+
+            <!-- Two Components -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(124,111,247,0.15); color: var(--accent);">
+                                <i class="bi bi-file-earmark-code"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">motspilot.sh</h5>
+                                <small class="text-muted">The Filing System</small>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-0">Shell utility that manages named tasks, requirements, state, checkpoints, and artifacts. Does not invoke AI directly.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(63,185,80,0.15); color: #3fb950;">
+                                <i class="bi bi-cpu"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Claude Code</h5>
+                                <small class="text-muted">The Engine</small>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-0">AI orchestrator that reads work orders and runs each pipeline phase as a Task subagent. You approve each phase before it proceeds.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Flow -->
+            <h4 class="mb-3">Pipeline at a Glance</h4>
+            <div class="card p-4 mb-5">
+                <div class="pipeline-flow justify-content-center">
+                    <span class="stage" style="background: rgba(121,192,255,0.12); color: #79c0ff;">
+                        <i class="bi bi-file-text me-1"></i> Requirements
+                    </span>
+                    <span class="arrow">&rarr;</span>
+                    <span class="stage" style="background: rgba(124,111,247,0.12); color: var(--accent-light);">
+                        <i class="bi bi-diagram-3 me-1"></i> Architecture
+                    </span>
+                    <span class="arrow">&rarr;</span>
+                    <span class="stage" style="background: rgba(63,185,80,0.12); color: #3fb950;">
+                        <i class="bi bi-code-slash me-1"></i> Development
+                    </span>
+                    <span class="arrow">&rarr;</span>
+                    <span class="stage" style="background: rgba(210,153,34,0.12); color: #d29922;">
+                        <i class="bi bi-check2-circle me-1"></i> Testing
+                    </span>
+                    <span class="arrow">&rarr;</span>
+                    <span class="stage" style="background: rgba(219,109,40,0.12); color: #db6d28;">
+                        <i class="bi bi-search me-1"></i> Verification
+                    </span>
+                    <span class="arrow">&rarr;</span>
+                    <span class="stage" style="background: rgba(238,76,77,0.12); color: #f85149;">
+                        <i class="bi bi-rocket me-1"></i> Delivery
+                    </span>
+                </div>
+                <p class="text-center text-muted mt-3 mb-0">
+                    <small>Human approval gates between every phase &mdash; or set <kbd>AUTO_APPROVE=all</kbd> to skip them</small>
+                </p>
+            </div>
+
+            <!-- Quick Start -->
+            <h4 class="mb-3">Quick Start</h4>
+            <div class="card mb-5">
+                <div class="card-body">
+                    <div class="d-flex gap-3 mb-3">
+                        <span class="step-number">1</span>
+                        <div>
+                            <strong>Initialize</strong> <small class="text-muted">(first time only)</small>
+                            <div class="code-block mt-2">
+                                <span class="prompt">$</span> ./motspilot/motspilot.sh init<br>
+                                <span class="comment"># Edit .motspilot/config with your language, framework, and test command</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3 mb-3">
+                        <span class="step-number">2</span>
+                        <div>
+                            <strong>Create a task</strong>
+                            <div class="code-block mt-2">
+                                <span class="prompt">$</span> ./motspilot/motspilot.sh go --task=csv-export "Add CSV export to reports"
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <span class="step-number">3</span>
+                        <div>
+                            <strong>Run the pipeline</strong> <small class="text-muted">(in Claude Code chat)</small>
+                            <div class="code-block mt-2">
+                                run motspilot pipeline
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Structure -->
+            <h4 class="mb-3">File Structure</h4>
+            <div class="card p-4">
+                <div class="file-tree">
+                    <span class="folder">motspilot/</span><br>
+                    &nbsp;&nbsp;<span class="file">motspilot.sh</span> <span class="desc">&mdash; Shell utility (filing system)</span><br>
+                    &nbsp;&nbsp;<span class="file">PIPELINE_ORCHESTRATOR.md</span> <span class="desc">&mdash; Claude Code orchestration instructions</span><br>
+                    &nbsp;&nbsp;<span class="file">README.md</span> <span class="desc">&mdash; User documentation</span><br>
+                    &nbsp;&nbsp;<span class="file">CLAUDE.md</span> <span class="desc">&mdash; Quick reference for Claude Code</span><br>
+                    &nbsp;&nbsp;<span class="folder">prompts/</span> <span class="desc">&mdash; Thinking frameworks (one per phase)</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">architecture.md</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">development.md</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">testing.md</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">verification.md</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">delivery.md</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">frameworks/</span> <span class="desc">&mdash; Framework-specific guides</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">cakephp.md</span> <span class="desc">&mdash; CakePHP 4.x guide</span><br>
+                    &nbsp;&nbsp;<span class="folder">.motspilot/</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">config</span> <span class="desc">&mdash; Project settings</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">current_task</span> <span class="desc">&mdash; Active task name</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">workspace/</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">tasks/&lt;name&gt;/</span> <span class="desc">&mdash; Active task artifacts</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">archive/&lt;name&gt;/</span> <span class="desc">&mdash; Completed task artifacts</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">logs/</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ WORKFLOW ============ -->
+        <div class="tab-pane fade" id="workflow" role="tabpanel">
+
+            <h4 class="mb-4">Task Lifecycle</h4>
+            <div class="card p-4 mb-5">
+                <div class="lifecycle-step">
+                    <div class="step-dot"></div>
+                    <div>
+                        <strong class="d-block mb-1">Create Task</strong>
+                        <div class="code-block">
+                            <span class="prompt">$</span> ./motspilot.sh go --task=my-feature "Description of what to build"
+                        </div>
+                        <small class="text-muted mt-1 d-block">Creates task directory, requirements template, and work order. Status: <kbd>pending</kbd></small>
+                    </div>
+                </div>
+                <div class="lifecycle-step">
+                    <div class="step-dot"></div>
+                    <div>
+                        <strong class="d-block mb-1">Fill Requirements</strong>
+                        <p class="text-muted mb-0">Edit <code>tasks/&lt;name&gt;/01_requirements.md</code> &mdash; describe what you want built, acceptance criteria, constraints.</p>
+                    </div>
+                </div>
+                <div class="lifecycle-step">
+                    <div class="step-dot"></div>
+                    <div>
+                        <strong class="d-block mb-1">Run Pipeline</strong>
+                        <div class="code-block">run motspilot pipeline</div>
+                        <small class="text-muted mt-1 d-block">Claude Code orchestrates 5 phases. Status: <kbd>in_progress</kbd></small>
+                    </div>
+                </div>
+                <div class="lifecycle-step">
+                    <div class="step-dot"></div>
+                    <div>
+                        <strong class="d-block mb-1">Approve Each Phase</strong>
+                        <p class="text-muted mb-0">Review summary after each phase &rarr; <strong>[A]</strong>pprove, <strong>[R]</strong>eject with feedback, or <strong>[V]</strong>iew full artifact.</p>
+                    </div>
+                </div>
+                <div class="lifecycle-step">
+                    <div class="step-dot"></div>
+                    <div>
+                        <strong class="d-block mb-1">Auto-Archive</strong>
+                        <p class="text-muted mb-0">When delivery is approved, task moves to <code>archive/</code> automatically. Status: <kbd>completed</kbd></p>
+                    </div>
+                </div>
+                <div class="lifecycle-step">
+                    <div class="step-dot" style="background: var(--text-muted);"></div>
+                    <div>
+                        <strong class="d-block mb-1">Reactivate (if needed)</strong>
+                        <div class="code-block">
+                            <span class="prompt">$</span> ./motspilot.sh reactivate my-feature<br>
+                            <span class="prompt">$</span> ./motspilot.sh go --task=my-feature --from=development
+                        </div>
+                        <small class="text-muted mt-1 d-block">Restores from archive for bug fixes. Re-runs from specified phase.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-task -->
+            <h4 class="mb-3">Multi-Task Scenarios</h4>
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <h6><i class="bi bi-plus-circle me-2" style="color: var(--accent)"></i>New Feature</h6>
+                        <div class="code-block mt-2">
+                            <span class="prompt">$</span> ./motspilot.sh go --task=new-feature "description"<br>
+                            <span class="comment"># Previous task paused automatically</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <h6><i class="bi bi-play-circle me-2" style="color: #3fb950"></i>Resume Paused Task</h6>
+                        <div class="code-block mt-2">
+                            <span class="prompt">$</span> ./motspilot.sh go --task=old-task --from=development
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <h6><i class="bi bi-arrow-counterclockwise me-2" style="color: #d29922"></i>Bug Fix on Archived Task</h6>
+                        <div class="code-block mt-2">
+                            <span class="prompt">$</span> ./motspilot.sh reactivate task-name<br>
+                            <span class="prompt">$</span> ./motspilot.sh go --task=task-name --from=development
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <h6><i class="bi bi-list-task me-2" style="color: #79c0ff"></i>See All Tasks</h6>
+                        <div class="code-block mt-2">
+                            <span class="prompt">$</span> ./motspilot.sh tasks <span class="comment"># active</span><br>
+                            <span class="prompt">$</span> ./motspilot.sh tasks --all <span class="comment"># + archived</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkpointing -->
+            <h4 class="mb-3">Checkpointing & Resumption</h4>
+            <div class="card p-4">
+                <p class="mb-2">After each approved phase, a checkpoint is saved to <code>tasks/&lt;name&gt;/checkpoint</code>.</p>
+                <ul class="text-muted mb-0">
+                    <li>Format: <code>&lt;phase&gt;|approved</code> (e.g., <code>development|approved</code>)</li>
+                    <li>Resume from any phase: <code>./motspilot.sh go --task=name --from=testing</code></li>
+                    <li>State persists on disk &mdash; works across sessions</li>
+                    <li>Artifacts serve as the persistent context bridge between sessions</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============ PHASES ============ -->
+        <div class="tab-pane fade" id="phases" role="tabpanel">
+
+            <p class="text-muted mb-4">Each phase uses a <strong>thinking framework</strong> (not a checklist) and receives the <strong>framework guide</strong> for your project's framework. Phases that write code actually create and modify files in the codebase.</p>
+
+            <!-- Phase 1 -->
+            <div class="card phase-card p-4 mb-4">
+                <div class="d-flex gap-3">
+                    <div class="phase-num">01</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <h5 class="mb-1">Requirements <small class="text-muted fw-normal">&mdash; You write this</small></h5>
+                            <span class="badge badge-no">No code</span>
+                        </div>
+                        <p class="text-muted mb-2">Describe what you want built: user stories, acceptance criteria, data requirements, UI specs, security constraints, and what's out of scope.</p>
+                        <small class="text-muted">Artifact: <code>01_requirements.md</code></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2 -->
+            <div class="card phase-card p-4 mb-4">
+                <div class="d-flex gap-3">
+                    <div class="phase-num">02</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <h5 class="mb-1">Architecture <small class="text-muted fw-normal">&mdash; Design only</small></h5>
+                            <span class="badge badge-no">No code</span>
+                        </div>
+                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document.</p>
+                        <div class="accordion" id="archAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#archThinking">
+                                        How it thinks
+                                    </button>
+                                </h2>
+                                <div id="archThinking" class="accordion-collapse collapse" data-bs-parent="#archAccordion">
+                                    <div class="accordion-body text-muted">
+                                        <ol>
+                                            <li><strong>Start with the person</strong> &mdash; Who uses this? What's their goal? What do they see?</li>
+                                            <li><strong>Get a feel for the codebase</strong> &mdash; Read landmark files. What conventions exist? What would look natural?</li>
+                                            <li><strong>Trace the blast radius</strong> &mdash; What could break? Map dependencies. Every line is a potential failure.</li>
+                                            <li><strong>Design by asking questions</strong> &mdash; Data, logic, security, failure. Not by following templates.</li>
+                                            <li><strong>Consider alternatives</strong> &mdash; Think of 2+ approaches, explain why you chose one.</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#archOutput">
+                                        Output: 10-section design document
+                                    </button>
+                                </h2>
+                                <div id="archOutput" class="accordion-collapse collapse" data-bs-parent="#archAccordion">
+                                    <div class="accordion-body text-muted">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <ol>
+                                                    <li>User Experience</li>
+                                                    <li>Codebase Analysis</li>
+                                                    <li>Blast Radius</li>
+                                                    <li>Data Design</li>
+                                                    <li>Component Design</li>
+                                                </ol>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <ol start="6">
+                                                    <li>Security Design</li>
+                                                    <li>Failure Modes</li>
+                                                    <li>Alternatives Considered</li>
+                                                    <li>File Map (new + modified)</li>
+                                                    <li>Rollback Plan</li>
+                                                </ol>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-2">Artifact: <code>02_architecture.md</code></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3 -->
+            <div class="card phase-card p-4 mb-4">
+                <div class="d-flex gap-3">
+                    <div class="phase-num">03</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <h5 class="mb-1">Development <small class="text-muted fw-normal">&mdash; Build in tiny loops</small></h5>
+                            <span class="badge badge-yes">Writes code</span>
+                        </div>
+                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase.</p>
+                        <div class="accordion" id="devAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#devRhythm">
+                                        Build rhythm: Loop 1 → 2 → 3
+                                    </button>
+                                </h2>
+                                <div id="devRhythm" class="accordion-collapse collapse" data-bs-parent="#devAccordion">
+                                    <div class="accordion-body text-muted">
+                                        <p><strong>Loop 1 &mdash; Foundation:</strong> Schema/migration &rarr; model/entity &rarr; relationships &rarr; verify</p>
+                                        <p><strong>Loop 2 &mdash; Logic:</strong> Service method &rarr; test &rarr; green &rarr; next method &rarr; test &rarr; green</p>
+                                        <p class="mb-0"><strong>Loop 3 &mdash; Interface:</strong> Controller/handler &rarr; template/view &rarr; routes &rarr; verify in browser</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#devRules">
+                                        Key rules
+                                    </button>
+                                </h2>
+                                <div id="devRules" class="accordion-collapse collapse" data-bs-parent="#devAccordion">
+                                    <div class="accordion-body text-muted">
+                                        <ul class="mb-0">
+                                            <li>Read every file you'll modify before changing it</li>
+                                            <li>Surgical additions only &mdash; never reformat or restructure</li>
+                                            <li>Match the existing coding style exactly</li>
+                                            <li>One logical action per migration file</li>
+                                            <li>Legacy patterns: work with them, don't refactor</li>
+                                            <li>Record test baseline before any changes</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-2">Artifact: <code>03_development.md</code></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 4 -->
+            <div class="card phase-card p-4 mb-4">
+                <div class="d-flex gap-3">
+                    <div class="phase-num">04</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <h5 class="mb-1">Testing <small class="text-muted fw-normal">&mdash; Security-first</small></h5>
+                            <span class="badge badge-yes">Writes code</span>
+                        </div>
+                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest.</p>
+                        <div class="card p-3" style="background: var(--surface-2);">
+                            <strong class="mb-2 d-block" style="font-size: 0.85rem;">Test Priority Order</strong>
+                            <ol class="text-muted mb-0" style="font-size: 0.85rem;">
+                                <li><strong>Integration safety</strong> &mdash; existing tests still pass</li>
+                                <li><strong>Security</strong> &mdash; auth bypass, CSRF, mass assignment, IDOR, XSS</li>
+                                <li><strong>Business logic edge cases</strong> &mdash; service layer decisions</li>
+                                <li><strong>Happy path</strong> &mdash; basic "it works" confirmation</li>
+                                <li><strong>Error paths</strong> &mdash; validation, duplicates, missing data</li>
+                            </ol>
+                        </div>
+                        <small class="text-muted d-block mt-2">Artifact: <code>04_testing.md</code></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 5 -->
+            <div class="card phase-card p-4 mb-4">
+                <div class="d-flex gap-3">
+                    <div class="phase-num">05</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <h5 class="mb-1">Verification <small class="text-muted fw-normal">&mdash; Skeptical senior reviewer</small></h5>
+                            <span class="badge badge-no">No code</span>
+                        </div>
+                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness.</p>
+                        <div class="card p-3" style="background: var(--surface-2);">
+                            <strong class="mb-2 d-block" style="font-size: 0.85rem;">Verification Checklist</strong>
+                            <ol class="text-muted mb-0" style="font-size: 0.85rem;">
+                                <li>Did anything existing break? (full test suite)</li>
+                                <li>Does the feature meet requirements? (every criterion)</li>
+                                <li>Is the code secure? (validation, escaping, auth, IDOR, CSRF)</li>
+                                <li>Is the code clean? (readable, maintainable)</li>
+                                <li>Correct framework API for the project's version?</li>
+                            </ol>
+                        </div>
+                        <small class="text-muted d-block mt-2">Artifact: <code>05_verification.md</code> &mdash; READY or NOT READY</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 6 -->
+            <div class="card phase-card p-4 mb-4">
+                <div class="d-flex gap-3">
+                    <div class="phase-num">06</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <h5 class="mb-1">Delivery <small class="text-muted fw-normal">&mdash; Safe and reversible</small></h5>
+                            <span class="badge badge-no">No code</span>
+                        </div>
+                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions.</p>
+                        <div class="row g-2" style="font-size: 0.85rem;">
+                            <div class="col-md-6">
+                                <ul class="text-muted mb-0">
+                                    <li>What changed (human summary)</li>
+                                    <li>Files (new, modified, deleted)</li>
+                                    <li>Deployment steps</li>
+                                    <li>Rollback steps</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="text-muted mb-0">
+                                    <li>Configuration changes</li>
+                                    <li>Git commit message</li>
+                                    <li>What to watch after deploy</li>
+                                    <li>Known limitations / future work</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-2">Artifact: <code>06_delivery.md</code></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ CONFIGURATION ============ -->
+        <div class="tab-pane fade" id="config" role="tabpanel">
+
+            <h4 class="mb-3">Project Configuration</h4>
+            <p class="text-muted mb-4">Edit <code>motspilot/.motspilot/config</code> &mdash; this file is sourced by <code>motspilot.sh</code> and read by the orchestrator.</p>
+
+            <div class="table-responsive mb-5">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">Key</th>
+                            <th style="width:35%">Description</th>
+                            <th style="width:20%">Example</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="config-key">PROJECT_ROOT</span></td>
+                            <td>Path to project root (relative to motspilot/ or absolute)</td>
+                            <td><span class="config-val">".."</span></td>
+                            <td><code>..</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">LANGUAGE</span></td>
+                            <td>Programming language</td>
+                            <td><span class="config-val">"php"</span></td>
+                            <td><code>""</code> (empty)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">LANGUAGE_VERSION</span></td>
+                            <td>Language version</td>
+                            <td><span class="config-val">"8.2"</span></td>
+                            <td><code>""</code> (empty)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">FRAMEWORK</span></td>
+                            <td>Framework name &mdash; loads matching guide from <code>prompts/frameworks/</code></td>
+                            <td><span class="config-val">"cakephp"</span></td>
+                            <td><code>""</code> (empty)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">AUTO_APPROVE</span></td>
+                            <td>Skip approval gates between phases</td>
+                            <td><span class="config-val">"all"</span> or <span class="config-val">"architecture,delivery"</span></td>
+                            <td><code>"none"</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">MAX_RETRIES</span></td>
+                            <td>Retry budget per phase on failure</td>
+                            <td><span class="config-val">2</span></td>
+                            <td><code>2</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">TEST_CMD</span></td>
+                            <td>How to run tests</td>
+                            <td><span class="config-val">"pytest"</span></td>
+                            <td><code>""</code> (empty)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">APP_URL</span></td>
+                            <td>URL for smoke testing in verification</td>
+                            <td><span class="config-val">"http://localhost:3000"</span></td>
+                            <td><code>"http://localhost:8080"</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="config-key">DEPLOY_CMD</span></td>
+                            <td>Deployment command</td>
+                            <td><span class="config-val">"./deploy.sh"</span></td>
+                            <td><code>"echo 'Deploy not configured'"</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Example configs -->
+            <h4 class="mb-3">Example Configurations</h4>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <h6 class="mb-3"><i class="bi bi-filetype-php me-2" style="color: #777bb4"></i>CakePHP Project</h6>
+                        <div class="code-block">
+                            LANGUAGE=<span class="config-val">"php"</span><br>
+                            LANGUAGE_VERSION=<span class="config-val">"8.2"</span><br>
+                            FRAMEWORK=<span class="config-val">"cakephp"</span><br>
+                            TEST_CMD=<span class="config-val">"./vendor/bin/phpunit"</span><br>
+                            APP_URL=<span class="config-val">"http://localhost:8080"</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <h6 class="mb-3"><i class="bi bi-filetype-py me-2" style="color: #3776ab"></i>Django Project</h6>
+                        <div class="code-block">
+                            LANGUAGE=<span class="config-val">"python"</span><br>
+                            LANGUAGE_VERSION=<span class="config-val">"3.12"</span><br>
+                            FRAMEWORK=<span class="config-val">"django"</span><br>
+                            TEST_CMD=<span class="config-val">"python manage.py test"</span><br>
+                            APP_URL=<span class="config-val">"http://localhost:8000"</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <h6 class="mb-3"><i class="bi bi-filetype-tsx me-2" style="color: #3178c6"></i>Next.js Project</h6>
+                        <div class="code-block">
+                            LANGUAGE=<span class="config-val">"typescript"</span><br>
+                            LANGUAGE_VERSION=<span class="config-val">"5.3"</span><br>
+                            FRAMEWORK=<span class="config-val">"nextjs"</span><br>
+                            TEST_CMD=<span class="config-val">"npm test"</span><br>
+                            APP_URL=<span class="config-val">"http://localhost:3000"</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-4">
+                        <h6 class="mb-3"><i class="bi bi-filetype-rb me-2" style="color: #cc342d"></i>Rails Project</h6>
+                        <div class="code-block">
+                            LANGUAGE=<span class="config-val">"ruby"</span><br>
+                            LANGUAGE_VERSION=<span class="config-val">"3.3"</span><br>
+                            FRAMEWORK=<span class="config-val">"rails"</span><br>
+                            TEST_CMD=<span class="config-val">"bundle exec rspec"</span><br>
+                            APP_URL=<span class="config-val">"http://localhost:3000"</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ COMMANDS ============ -->
+        <div class="tab-pane fade" id="commands" role="tabpanel">
+
+            <h4 class="mb-4">Command Reference</h4>
+
+            <div class="table-responsive mb-5">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 45%">Command</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>./motspilot.sh init</code></td>
+                            <td>First-time setup &mdash; creates config and directory structure</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh go --task=&lt;name&gt; "description"</code></td>
+                            <td>Create task + generate work order</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh go --task=&lt;name&gt;</code></td>
+                            <td>Re-prepare existing task (regenerate work order)</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh go --task=&lt;name&gt; --from=&lt;phase&gt;</code></td>
+                            <td>Prepare to re-run from a specific phase</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh tasks</code></td>
+                            <td>List active tasks with phase progress bars</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh tasks --all</code></td>
+                            <td>List active + archived tasks</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh status [--task=&lt;name&gt;]</code></td>
+                            <td>Detailed task status with artifact sizes</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh archive --task=&lt;name&gt;</code></td>
+                            <td>Manually archive a completed task</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh reactivate &lt;name&gt;</code></td>
+                            <td>Restore task from archive for bug fixes</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh reset --task=&lt;name&gt;</code></td>
+                            <td>Delete phase artifacts (keeps requirements)</td>
+                        </tr>
+                        <tr>
+                            <td><code>./motspilot.sh view &lt;phase&gt; [--task=&lt;name&gt;]</code></td>
+                            <td>View a phase artifact in terminal</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h5 class="mb-3">Phase Names & Shortcuts</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h6 class="mb-2 text-muted" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Full Phase Names</h6>
+                        <code>architecture</code> &middot;
+                        <code>development</code> &middot;
+                        <code>testing</code> &middot;
+                        <code>verification</code> &middot;
+                        <code>delivery</code>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h6 class="mb-2 text-muted" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">View Shortcuts</h6>
+                        <code>req</code> &middot;
+                        <code>arch</code> &middot;
+                        <code>dev</code> &middot;
+                        <code>test</code> &middot;
+                        <code>verify</code> &middot;
+                        <code>wo</code> (workorder)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ FRAMEWORKS ============ -->
+        <div class="tab-pane fade" id="frameworks" role="tabpanel">
+
+            <h4 class="mb-3">Framework Guides</h4>
+            <p class="text-muted mb-4">Framework-specific knowledge lives in <code>prompts/frameworks/&lt;name&gt;.md</code>. When a guide exists for your configured <code>FRAMEWORK</code>, it's automatically included in every subagent prompt alongside the thinking framework.</p>
+
+            <!-- Available -->
+            <h5 class="mb-3">Available Guides</h5>
+            <div class="card p-4 mb-5">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="principle-icon" style="background: rgba(63,185,80,0.15); color: #3fb950;">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">cakephp.md</h6>
+                        <small class="text-muted">CakePHP 4.x &mdash; Version reference, naming conventions, migration/entity/table/service/controller/template/route/test patterns, verification checks, deployment commands</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How to add -->
+            <h5 class="mb-3">Adding a New Framework Guide</h5>
+            <div class="card p-4 mb-4">
+                <div class="d-flex gap-3 mb-3">
+                    <span class="step-number">1</span>
+                    <div>Create <code>motspilot/prompts/frameworks/&lt;framework-name&gt;.md</code></div>
+                </div>
+                <div class="d-flex gap-3 mb-3">
+                    <span class="step-number">2</span>
+                    <div>Set <code>FRAMEWORK="&lt;framework-name&gt;"</code> in <code>.motspilot/config</code></div>
+                </div>
+                <div class="d-flex gap-3">
+                    <span class="step-number">3</span>
+                    <div>The pipeline will automatically include it in all phases</div>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Recommended Sections for a Framework Guide</h5>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Section</th>
+                            <th>Purpose</th>
+                            <th>Used by Phase</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Version Reference</td>
+                            <td>Correct vs incorrect API for the framework version</td>
+                            <td>All phases</td>
+                        </tr>
+                        <tr>
+                            <td>Naming Conventions</td>
+                            <td>How files, classes, routes are named</td>
+                            <td>Architecture, Development</td>
+                        </tr>
+                        <tr>
+                            <td>Files to Explore</td>
+                            <td>Key landmark files for codebase understanding</td>
+                            <td>Architecture</td>
+                        </tr>
+                        <tr>
+                            <td>Migration / Schema Patterns</td>
+                            <td>How to create and rollback schema changes</td>
+                            <td>Development</td>
+                        </tr>
+                        <tr>
+                            <td>Model / Entity Patterns</td>
+                            <td>Access control, validation, relationships</td>
+                            <td>Development</td>
+                        </tr>
+                        <tr>
+                            <td>Service / Logic Patterns</td>
+                            <td>Where business logic lives</td>
+                            <td>Development</td>
+                        </tr>
+                        <tr>
+                            <td>Controller / Handler Patterns</td>
+                            <td>Request handling conventions</td>
+                            <td>Development</td>
+                        </tr>
+                        <tr>
+                            <td>Template / View Patterns</td>
+                            <td>Output escaping, form helpers, layout</td>
+                            <td>Development, Verification</td>
+                        </tr>
+                        <tr>
+                            <td>Test Patterns</td>
+                            <td>Test setup, fixtures/factories, security test examples</td>
+                            <td>Testing</td>
+                        </tr>
+                        <tr>
+                            <td>Verification Checks</td>
+                            <td>Grep patterns to catch common mistakes</td>
+                            <td>Verification</td>
+                        </tr>
+                        <tr>
+                            <td>Deployment Commands</td>
+                            <td>Deploy, rollback, cache clear commands</td>
+                            <td>Delivery</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============ PHILOSOPHY ============ -->
+        <div class="tab-pane fade" id="philosophy" role="tabpanel">
+
+            <h4 class="mb-4">Core Philosophy</h4>
+            <p class="text-muted mb-4">These principles guide every phase of the pipeline. They're not rules to follow &mdash; they're a way of thinking.</p>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(124,111,247,0.15); color: var(--accent);">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Start with the person</h6>
+                                <p class="text-muted mb-0 small">Think about who uses the feature before touching code. What's their goal? Their emotional state? What do they see when things go wrong?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(121,192,255,0.15); color: #79c0ff;">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Explore before building</h6>
+                                <p class="text-muted mb-0 small">Read existing code. Understand patterns. Don't assume anything about the codebase structure. Your new code should feel like it was always there.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(238,76,77,0.15); color: #f85149;">
+                                <i class="bi bi-bullseye"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Trace the blast radius</h6>
+                                <p class="text-muted mb-0 small">Before changing anything, ask: "What could this break?" Map every dependency between your feature and existing code.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(63,185,80,0.15); color: #3fb950;">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Build in tiny loops</h6>
+                                <p class="text-muted mb-0 small">Write a little &rarr; verify it works &rarr; write more. Never write 500 lines and hope for the best.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(210,153,34,0.15); color: #d29922;">
+                                <i class="bi bi-shield-lock"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Security mindset</h6>
+                                <p class="text-muted mb-0 small">Think like an attacker at every step. Test auth bypass, CSRF, IDOR, mass assignment, and XSS before testing the happy path.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(219,109,40,0.15); color: #db6d28;">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Never greenfield</h6>
+                                <p class="text-muted mb-0 small">Always integrating into existing apps. Match existing patterns. Work with legacy code, don't refactor it.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(139,146,154,0.15); color: var(--text-muted);">
+                                <i class="bi bi-database"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">One action per migration</h6>
+                                <p class="text-muted mb-0 small">Never combine unrelated changes in a single migration. Each migration should do exactly one thing &mdash; easier to debug, rollback, and review.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 p-4">
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="principle-icon" style="background: rgba(124,111,247,0.15); color: var(--accent-light);">
+                                <i class="bi bi-eye"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Human in the loop</h6>
+                                <p class="text-muted mb-0 small">Approval gates between every phase. You review, reject, or approve. The AI proposes, you decide.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How the prompt architecture works -->
+            <h4 class="mt-5 mb-3">Prompt Architecture</h4>
+            <div class="card p-4">
+                <p class="text-muted mb-3">Each subagent receives a layered prompt assembled by the orchestrator:</p>
+                <div class="code-block">
+                    <span class="comment">=== MOTSPILOT PHASE: [phase name] ===</span><br><br>
+                    <span class="comment">=== THINKING FRAMEWORK ===</span><br>
+                    <span style="color: var(--accent-light);">[Full contents of prompts/&lt;phase&gt;.md]</span><br>
+                    <span style="color: #6a737d;">Universal thinking patterns &mdash; how to approach the work</span><br><br>
+                    <span class="comment">=== FRAMEWORK GUIDE ===</span><br>
+                    <span style="color: var(--accent-light);">[Full contents of prompts/frameworks/&lt;FRAMEWORK&gt;.md]</span><br>
+                    <span style="color: #6a737d;">Framework-specific patterns, API reference, verification checks</span><br><br>
+                    <span class="comment">=== PROJECT CONFIGURATION ===</span><br>
+                    <span style="color: #6a737d;">Language, version, framework, test command, app URL</span><br><br>
+                    <span class="comment">=== REQUIREMENTS ===</span><br>
+                    <span style="color: #6a737d;">Full contents of 01_requirements.md</span><br><br>
+                    <span class="comment">=== PREVIOUS PHASE OUTPUTS ===</span><br>
+                    <span style="color: #6a737d;">Cumulative context from all completed prior phases</span><br><br>
+                    <span class="comment">=== YOUR TASK ===</span><br>
+                    <span style="color: #6a737d;">Phase-specific instructions</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ RAW FILES ============ -->
+        <div class="tab-pane fade" id="rawfiles" role="tabpanel">
+            <h4 class="mb-4">Source Files</h4>
+            <p class="text-muted mb-4">Browse the raw markdown files that power the motspilot pipeline. Click a file to view its contents.</p>
+            <div class="rawfiles-layout">
+                <div class="rawfiles-sidebar">
+                    <div class="sidebar-heading">Files</div>
+                    <a class="file-link active" data-rf-path="PIPELINE_ORCHESTRATOR.md" onclick="loadRawFile(this)">
+                        PIPELINE_ORCHESTRATOR.md
+                    </a>
+                    <a class="file-link" data-rf-path="README.md" onclick="loadRawFile(this)">
+                        README.md
+                    </a>
+                    <a class="file-link" data-rf-path="CLAUDE.md" onclick="loadRawFile(this)">
+                        CLAUDE.md
+                    </a>
+                    <div class="sidebar-heading mt-3">prompts/</div>
+                    <a class="file-link" data-rf-path="prompts/architecture.md" onclick="loadRawFile(this)">
+                        <span class="file-dir">prompts/</span>architecture.md
+                    </a>
+                    <a class="file-link" data-rf-path="prompts/development.md" onclick="loadRawFile(this)">
+                        <span class="file-dir">prompts/</span>development.md
+                    </a>
+                    <a class="file-link" data-rf-path="prompts/testing.md" onclick="loadRawFile(this)">
+                        <span class="file-dir">prompts/</span>testing.md
+                    </a>
+                    <a class="file-link" data-rf-path="prompts/verification.md" onclick="loadRawFile(this)">
+                        <span class="file-dir">prompts/</span>verification.md
+                    </a>
+                    <a class="file-link" data-rf-path="prompts/delivery.md" onclick="loadRawFile(this)">
+                        <span class="file-dir">prompts/</span>delivery.md
+                    </a>
+                    <div class="sidebar-heading mt-3">prompts/frameworks/</div>
+                    <a class="file-link" data-rf-path="prompts/frameworks/cakephp.md" onclick="loadRawFile(this)">
+                        <span class="file-dir">frameworks/</span>cakephp.md
+                    </a>
+                </div>
+                <div class="rawfiles-reader" id="rawfilesReader">
+                    <p class="loading-msg">Select a file from the sidebar to view its contents.</p>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-content -->
+</div><!-- /container -->
+
+<!-- Footer -->
+<footer class="border-top py-4 mt-5" style="border-color: var(--border) !important;">
+    <div class="container text-center text-muted small">
+        motspilot by MOTSTECH &mdash; AI-Powered Dev Pipeline
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+(function() {
+    const reader = document.getElementById('rawfilesReader');
+    let rawfilesInitialized = false;
+    const fileCache = {};
+
+    // Auto-load first file when tab is first shown
+    const rawfilesTab = document.getElementById('rawfiles-tab');
+    rawfilesTab.addEventListener('shown.bs.tab', function() {
+        if (!rawfilesInitialized) {
+            rawfilesInitialized = true;
+            const firstLink = document.querySelector('#rawfiles .file-link.active');
+            if (firstLink) loadRawFile(firstLink);
+        }
+    });
+
+    window.loadRawFile = function(el) {
+        // Update active state in sidebar
+        document.querySelectorAll('#rawfiles .file-link').forEach(function(link) {
+            link.classList.remove('active');
+        });
+        el.classList.add('active');
+
+        const filePath = el.getAttribute('data-rf-path');
+        reader.innerHTML = '<p class="loading-msg">Loading ' + filePath + '...</p>';
+
+        // Use cache if available
+        if (fileCache[filePath]) {
+            renderMarkdown(filePath, fileCache[filePath]);
+            return;
+        }
+
+        fetch(filePath)
+            .then(function(response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.text();
+            })
+            .then(function(text) {
+                fileCache[filePath] = text;
+                renderMarkdown(filePath, text);
+            })
+            .catch(function(err) {
+                reader.innerHTML = '<div class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Failed to load <code>' + filePath + '</code><br><small class="text-muted">' + err.message + '</small></div>';
+            });
+    };
+
+    function renderMarkdown(filePath, text) {
+        var html = marked.parse(text);
+        reader.innerHTML = '<div class="md-rendered">' +
+            '<div class="d-flex align-items-center gap-2 mb-3 pb-2" style="border-bottom: 1px solid var(--border);">' +
+            '<i class="bi bi-file-earmark-text" style="color: var(--accent);"></i>' +
+            '<code style="background: none; border: none; color: var(--accent-light); font-size: 0.9rem;">' + filePath + '</code>' +
+            '</div>' +
+            html +
+            '</div>';
+    }
+})();
+</script>
+</body>
+</html>

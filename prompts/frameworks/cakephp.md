@@ -1,0 +1,406 @@
+# CakePHP 4.x Framework Guide
+
+This file is automatically included by the motspilot pipeline when `FRAMEWORK="cakephp"` is set in config. It provides framework-specific knowledge for all pipeline phases.
+
+---
+
+## Version Reference
+
+**This guide is for CakePHP 4.x. Do NOT use CakePHP 5.x APIs.**
+
+| What | CakePHP 4.x (correct) | CakePHP 5.x (WRONG — don't use) |
+|------|----------------------|---------------------|
+| Custom finder params | `(Query $query, array $options)` | `(SelectQuery $query)` |
+| Query class | `Cake\ORM\Query` | `Cake\ORM\Query\SelectQuery` |
+| Table loading (controllers) | `$this->fetchTable('Name')` (4.3+) or `$this->getTableLocator()->get('Name')` | Only `$this->fetchTable()` |
+| Auth | AuthComponent or Authentication plugin (check which the project uses) | Authentication plugin only |
+| CSRF | `CsrfProtectionMiddleware` (cookie-based) | Also `SessionCsrfProtectionMiddleware` |
+| Coding standard | PSR-2 | PSR-12 |
+| Migrations | `Migrations\AbstractMigration` with `change()` (auto-reversible) | Same |
+
+---
+
+## Naming Conventions
+
+- **Plural**: table names (`platform_packages`), controller classes (`PlatformPackagesController`), table classes (`PlatformPackagesTable`)
+- **Singular**: entity classes (`PlatformPackage`)
+
+---
+
+## Files to Explore (Architecture Phase)
+
+When exploring a CakePHP codebase, read these files like a detective:
+
+```
+src/Application.php          → What middleware? What plugins? How is auth wired?
+config/routes.php             → What patterns? Prefix routing? RESTful? Slug-based?
+src/Model/Table/              → ls this directory. Which tables exist? How are they named?
+templates/layout/default.php  → What CSS framework? What's the navigation structure?
+composer.json                 → PHP version? What packages? Any CakePHP plugins?
+```
+
+**Match what's already there:**
+- If the project uses `$this->loadModel('Users')` everywhere, don't use `$this->fetchTable()`.
+- If the project uses AuthComponent, don't introduce the Authentication plugin.
+- If the project uses Bootstrap 4, don't write Tailwind.
+
+---
+
+## PHP File Header
+
+Every PHP file starts with:
+```php
+<?php
+declare(strict_types=1);
+```
+
+---
+
+## Migration Patterns
+
+**One logical action per migration file.** Each migration should do exactly ONE thing:
+- Creating a table → one migration
+- Adding columns to an existing table → one migration
+- Seeding/inserting data → one migration
+- Adding an index → one migration
+
+Never combine multiple unrelated changes (e.g., creating two different tables, or creating a table + seeding data) in a single migration. Small, focused migrations are easier to debug, rollback, and review.
+
+**Other rules:**
+- Use `change()` so CakePHP can auto-rollback. Only use `up()`/`down()` if you need custom rollback logic, and ALWAYS include the `down()`.
+- New table: `$this->table('name')->addColumn(...)->create()`
+- Add column to existing: `$this->table('name')->addColumn(...)->update()`
+- Guard with `hasColumn()` / `hasTable()` checks before adding/removing — migrations should be idempotent.
+- Index every column that appears in WHERE, JOIN, or ORDER BY.
+- Foreign keys: verify the referenced table actually exists.
+
+**After creating the migration:**
+```bash
+bin/cake migrations migrate
+bin/cake migrations status
+```
+Verify it ran. Then:
+```bash
+bin/cake migrations rollback
+bin/cake migrations status
+```
+Verify it rolled back cleanly. Then migrate again.
+
+---
+
+## Entity Patterns
+
+### `$_accessible` — Mass assignment protection
+Think through every field:
+- `id` → false (auto-increment, never user-set)
+- `role`, `is_admin`, `is_verified` → false (privilege escalation)
+- `email`, `name`, `password` → true (user-editable fields)
+- `created`, `modified` → omit (handled by Timestamp behavior)
+
+**Never `'*' => true`. Never include `id`, `role`, `is_admin`.**
+
+### `$_hidden` — Serialization protection
+If this entity is serialized to JSON or displayed in debug, what should be invisible?
+- Passwords, tokens, secrets → always hidden
+
+### Virtual fields
+Use `_getFieldName()` accessor methods.
+
+---
+
+## Table Class Patterns
+
+Don't write custom finders speculatively. Write them as you need them in the service layer.
+
+CakePHP 4.x finder signature (NOT 5.x):
+```php
+public function findActive(Query $query, array $options): Query
+{
+    return $query->where(['status' => 'active']);
+}
+```
+Use `Cake\ORM\Query`, NOT `Cake\ORM\Query\SelectQuery`.
+
+Validate in Table classes, not Controllers.
+
+---
+
+## Service Patterns
+
+Put services in `src/Service/`.
+
+A service method should read like a story of what happens:
+```php
+public function registerUser(array $data): User
+{
+    // 1. Does this email already exist?
+    $existing = $this->usersTable->findByEmail($data['email'])->first();
+    if ($existing) {
+        throw new UserAlreadyExistsException($data['email']);
+    }
+
+    // 2. Create the user
+    $user = $this->usersTable->newEntity($data);
+    $savedUser = $this->usersTable->saveOrFail($user);
+
+    // 3. Generate verification token
+    $this->createVerificationToken($savedUser);
+
+    return $savedUser;
+}
+```
+
+**Services must NEVER touch:**
+- `$this->request` (that's a controller concern)
+- `$this->Flash` (that's a controller concern)
+- `$this->redirect()` (that's a controller concern)
+
+Use `LocatorAwareTrait` to access tables. Constructor loads table references. Methods throw domain-specific exceptions (not `\Exception`).
+
+---
+
+## Controller Patterns
+
+A controller action should be boring — get input, call service, respond:
+```php
+public function register(): ?\Cake\Http\Response
+{
+    $user = $this->Users->newEmptyEntity();
+
+    if ($this->request->is('post')) {
+        try {
+            $user = $this->registrationService->register(
+                $this->request->getData()
+            );
+            $this->Flash->success(__('Registration successful. Check your email.'));
+            return $this->redirect(['action' => 'login']);
+        } catch (UserAlreadyExistsException $e) {
+            $this->Flash->error(__('That email is already registered.'));
+        }
+    }
+
+    $this->set(compact('user'));
+    return null;
+}
+```
+
+- Actions return `?\Cake\Http\Response`
+- Max 10-15 lines per action
+- Use `$this->request->getData()`, never `$_POST`
+- Use `$this->request->getQuery()`, never `$_GET`
+
+---
+
+## Template Patterns
+
+Assume every variable contains malicious HTML:
+```php
+<?= h($user->name) ?>              <!-- ALWAYS -->
+<?= $user->name ?>                  <!-- NEVER -->
+```
+
+- Use `$this->Form->create($entity)` for ALL forms — handles CSRF automatically.
+- Use `$this->Html->link()` for links.
+- Use existing elements (`$this->element('sidebar')`) when they exist.
+- Match the CSS framework and layout patterns already in the project.
+
+---
+
+## Route Patterns
+
+Read the existing routes file. Understand the patterns. Add yours at the end of the appropriate scope. Ask: "Could my route pattern accidentally match a URL that something else is supposed to handle?"
+
+CakePHP uses DashedRoute by convention (kebab-case URLs).
+
+---
+
+## Test Patterns
+
+### Test infrastructure
+```bash
+ls tests/Fixture/                    # What fixtures exist?
+ls tests/TestCase/Controller/        # What test patterns?
+```
+
+### Integration tests
+```php
+use Cake\TestSuite\IntegrationTestTrait;
+use Cake\TestSuite\TestCase;
+
+class FeatureControllerTest extends TestCase
+{
+    use IntegrationTestTrait;
+
+    protected $fixtures = [
+        'app.Users',              // Existing — reuse
+        'app.NewThings',          // New — you create this
+    ];
+
+    // Copy whatever auth setup pattern the project's existing tests use.
+    private function loginAs(int $userId): void
+    {
+        $this->session(['Auth' => [
+            'id' => $userId,
+            // ... match existing session structure
+        ]]);
+    }
+
+    public function testSomething(): void
+    {
+        $this->enableCsrfToken();
+        $this->enableSecurityToken();
+        // ...
+    }
+}
+```
+
+### Security test examples
+```php
+// Auth bypass
+public function testProtectedRouteRedirectsWithoutLogin(): void
+{
+    $this->get('/protected-route');
+    $this->assertRedirectContains('/login');
+}
+
+// CSRF bypass
+public function testFormSubmitWithoutCsrfFails(): void
+{
+    $this->post('/register', ['email' => 'test@test.com']);
+    $this->assertResponseCode(403);
+}
+
+// IDOR
+public function testUserCannotViewOtherUsersProfile(): void
+{
+    $this->loginAs(1);
+    $this->get('/users/view/2');
+    // Should either 403 or redirect — NOT show user 2's data
+}
+
+// Mass assignment
+public function testCannotSetRoleViaMassAssignment(): void
+{
+    $this->enableCsrfToken();
+    $this->enableSecurityToken();
+    $this->post('/register', [
+        'email' => 'hacker@example.com',
+        'password' => 'Test1234!',
+        'role' => 'admin',
+    ]);
+    $user = $this->getTableLocator()->get('Users')
+        ->find()->where(['email' => 'hacker@example.com'])->first();
+    if ($user) {
+        $this->assertNotEquals('admin', $user->role);
+    }
+}
+```
+
+### Fixture patterns
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Test\Fixture;
+
+use Cake\TestSuite\Fixture\TestFixture;
+
+class VerificationTokensFixture extends TestFixture
+{
+    public function init(): void
+    {
+        $this->records = [
+            // Valid, happy path
+            ['id' => 1, 'token' => 'valid-abc123', 'expires_at' => date('Y-m-d H:i:s', strtotime('+24 hours')), 'consumed_at' => null],
+            // Expired
+            ['id' => 2, 'token' => 'expired-xyz789', 'expires_at' => date('Y-m-d H:i:s', strtotime('-1 hour')), 'consumed_at' => null],
+            // Already consumed
+            ['id' => 3, 'token' => 'consumed-def456', 'expires_at' => date('Y-m-d H:i:s', strtotime('+24 hours')), 'consumed_at' => '2024-01-15 10:30:00'],
+        ];
+        parent::init();
+    }
+}
+```
+
+**If a fixture already exists:** add records with IDs starting at 100+ to avoid conflicts. Match the existing column structure exactly.
+
+---
+
+## Verification Checks
+
+Run these searches to catch common mistakes:
+
+```bash
+# 5.x API used instead of 4.x:
+grep -r "SelectQuery" src/
+# Should find ZERO results. Must use Query.
+
+grep -r "use Cake\\ORM\\Query\\SelectQuery" src/
+# Should find ZERO results.
+
+# Raw HTML forms instead of FormHelper:
+grep -rn "<form" templates/
+# Should only find results inside $this->Form->create() or existing code.
+
+# Unescaped output:
+grep -rn "<?= \$" templates/ | grep -v "h(" | grep -v "Form->" | grep -v "Html->" | grep -v "Flash->" | grep -v "element(" | grep -v "Paginator->"
+# Every result here is a potential XSS vulnerability.
+
+# Mass assignment vulnerability:
+grep -rn "'\\*' => true" src/Model/Entity/
+# Should find ZERO results in new entities. May exist in old ones (note as concern).
+
+# Direct superglobals:
+grep -rn "\$_POST\|\$_GET\|\$_REQUEST" src/
+# Should find ZERO results.
+```
+
+---
+
+## Deployment Commands
+
+### Deploy
+```bash
+# Run migrations
+bin/cake migrations migrate
+
+# Clear caches
+bin/cake cache clear_all
+bin/cake schema_cache clear  # if using schema cache
+```
+
+### Rollback
+```bash
+# Code-level rollback
+git checkout PREVIOUS_COMMIT
+composer install --no-dev --optimize-autoloader
+bin/cake migrations rollback
+bin/cake cache clear_all
+
+# Nuclear rollback (if database is in bad state)
+mysql -u USER -p DATABASE < backup_YYYYMMDD_HHMMSS.sql
+git checkout PREVIOUS_COMMIT
+composer install --no-dev --optimize-autoloader
+bin/cake cache clear_all
+```
+
+### Smoke test
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://APP_URL/          # Homepage → 200
+curl -s -o /dev/null -w "%{http_code}" https://APP_URL/login      # Login → 200
+curl -s -o /dev/null -w "%{http_code}" https://APP_URL/new-route  # New route → 200
+```
+
+---
+
+## Self-Doubt Checklist
+
+After completing work, run through these:
+
+- Did I use `SelectQuery` anywhere? → Must be `Query` for 4.x
+- Did I use `$this->fetchTable()` in a pre-4.3 project? → Use `$this->getTableLocator()->get()` instead
+- Did I create any `<form>` tags instead of `$this->Form->create()`?
+- Grep templates for `<?= $` without `h(` — any XSS holes?
+- Check every entity `$_accessible` — any dangerous fields set to true?
+- Is there any place a user could access another user's data by guessing an ID?
+- Raw `$_POST` or `$_GET` anywhere? Must use `$this->request->getData()` / `getQuery()`

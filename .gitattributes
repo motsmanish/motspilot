@@ -1,0 +1,12 @@
+# Normalize line endings
+* text=auto
+
+# Force LF for shell scripts and markdown
+*.sh text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary

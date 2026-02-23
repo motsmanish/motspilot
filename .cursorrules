@@ -1,0 +1,31 @@
+# motspilot — Cursor Integration Rules (MOTSTECH)
+
+## Pipeline Awareness
+- Check `.motspilot/workspace/tasks/` for pipeline state
+- Requirements: `01_requirements.md`
+- Architecture: `02_architecture.md`
+- Read these BEFORE making changes
+
+## Framework-Specific Rules
+- Check `.motspilot/config` for the FRAMEWORK setting
+- Read `prompts/frameworks/<FRAMEWORK>.md` for framework-specific conventions
+- Follow the framework guide's API patterns, naming conventions, and coding standards
+
+## Existing Codebase Rules
+- NEVER modify existing method signatures
+- NEVER restructure existing files as part of a feature
+- ADD to existing files — don't rewrite them
+- ADD routes — don't rename or remove existing ones
+- Match existing code style (tabs vs spaces, comment style)
+- Use the SAME auth mechanism the project already uses
+
+## Migration Rules
+- One logical action per migration file
+- Never combine table creation + data seeding in one migration
+- Migrations must be idempotent — guard with existence checks
+
+## Screenshot Workflow
+When the user pastes screenshots:
+1. Analyze the UI shown
+2. Write requirements matching the `01_requirements.md` template
+3. Note existing UI patterns visible and match them
