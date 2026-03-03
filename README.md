@@ -34,6 +34,48 @@ Coordinates five specialized AI agents (architecture, development, testing, veri
 
 ---
 
+## Installation
+
+### Option A: Symlink (recommended for teams)
+
+Clone motspilot once and symlink it into each project. The tool stays separate from your project code, and updates apply to all projects.
+
+```bash
+# Clone motspilot to a shared location
+git clone https://github.com/motsmanish/motspilot.git ~/motspilot
+
+# In your project root, create a symlink
+cd /path/to/your-project
+ln -s ~/motspilot ./motspilot
+
+# Add the symlink to your project's .gitignore
+echo '/motspilot' >> .gitignore
+```
+
+### Option B: Submodule (for version-pinning)
+
+Add motspilot as a git submodule. This pins a specific version and makes setup automatic for other developers who clone your repo.
+
+```bash
+cd /path/to/your-project
+git submodule add https://github.com/motsmanish/motspilot.git motspilot
+git commit -m "Add motspilot as submodule"
+```
+
+Other developers clone with `--recursive`, or run `git submodule update --init` after cloning.
+
+### Option C: Direct clone (simplest)
+
+Clone motspilot directly into your project. Simple but you manage updates manually.
+
+```bash
+cd /path/to/your-project
+git clone https://github.com/motsmanish/motspilot.git
+echo '/motspilot' >> .gitignore
+```
+
+---
+
 ## Quick Start
 
 ```bash
@@ -175,38 +217,43 @@ Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one
 ## File Structure
 
 ```
-motspilot/
-├── motspilot.sh                    # Shell utility (run this first)
-├── PIPELINE_ORCHESTRATOR.md        # Claude Code orchestration instructions
-├── README.md                       # This file
-├── CLAUDE.md                       # Quick reference for Claude Code
+motspilot/                              # The tool (symlink, submodule, or clone)
+├── motspilot.sh                        # Shell utility
+├── PIPELINE_ORCHESTRATOR.md            # Claude Code orchestration instructions
+├── README.md                           # This file
+├── CLAUDE.md                           # Quick reference for Claude Code
 ├── prompts/
-│   ├── architecture.md             # Architecture thinking framework
-│   ├── development.md              # Development thinking framework
-│   ├── testing.md                  # Testing thinking framework
-│   ├── verification.md             # Verification thinking framework
-│   ├── delivery.md                 # Delivery thinking framework
-│   └── frameworks/                 # Framework-specific guides
-│       └── cakephp.md              # CakePHP 4.x guide
+│   ├── architecture.md                 # Architecture thinking framework
+│   ├── development.md                  # Development thinking framework
+│   ├── testing.md                      # Testing thinking framework
+│   ├── verification.md                 # Verification thinking framework
+│   ├── delivery.md                     # Delivery thinking framework
+│   └── frameworks/                     # Framework-specific guides
+│       └── cakephp.md                  # CakePHP 4.x guide
 └── .motspilot/
-    ├── config                      # Project settings (edit this)
-    ├── current_task                # Name of currently active task
-    ├── workspace/
-    │   ├── tasks/
-    │   │   └── <task-name>/
-    │   │       ├── meta            # STATUS, DESCRIPTION, CREATED
-    │   │       ├── 01_requirements.md
-    │   │       ├── 02_architecture.md
-    │   │       ├── 03_development.md
-    │   │       ├── 04_testing.md
-    │   │       ├── 05_verification.md
-    │   │       ├── 06_delivery.md
-    │   │       ├── checkpoint      # Current phase state
-    │   │       └── pipeline_workorder.md
-    │   └── archive/
-    │       └── <task-name>/        # Same structure, auto-moved on completion
+    ├── config                          # Project settings (edit this)
+    ├── current_task                    # Name of currently active task
     └── logs/
         └── motspilot.log
+```
+
+**Task data** lives in the workspace — either inside `.motspilot/workspace/` (default) or in your project repo via `WORKSPACE_DIR`:
+
+```
+<workspace>/                            # .motspilot/workspace/ OR <WORKSPACE_DIR>/
+├── tasks/
+│   └── <task-name>/
+│       ├── meta                        # STATUS, DESCRIPTION, CREATED
+│       ├── 01_requirements.md
+│       ├── 02_architecture.md
+│       ├── 03_development.md
+│       ├── 04_testing.md
+│       ├── 05_verification.md
+│       ├── 06_delivery.md
+│       ├── checkpoint                  # Current phase state
+│       └── pipeline_workorder.md
+└── archive/
+    └── <task-name>/                    # Same structure, auto-moved on completion
 ```
 
 ---
@@ -219,11 +266,45 @@ Edit `motspilot/.motspilot/config`:
 LANGUAGE="php"                  # Language: php, python, javascript, typescript, go, ruby, java, etc.
 LANGUAGE_VERSION="8.2"          # Language version
 FRAMEWORK="cakephp"             # Framework: cakephp, laravel, django, nextjs, express, rails, etc.
-PROJECT_ROOT=".."               # Path to your project root
+PROJECT_ROOT=".."               # Path to your project root (relative to motspilot/)
 AUTO_APPROVE="none"             # "none" = approve each phase, "all" = fully automatic
 TEST_CMD="./vendor/bin/phpunit" # How to run tests
 APP_URL="http://localhost:8080" # For smoke testing (verification phase)
+WORKSPACE_DIR=""                # Store task data in your project repo (see below)
 ```
+
+### Storing task data in your project repo (`WORKSPACE_DIR`)
+
+By default, task artifacts (requirements, architecture docs, development summaries, etc.) are stored inside `motspilot/.motspilot/workspace/`. This directory is gitignored in the motspilot repo, so **task data is not version-controlled**.
+
+If you want to preserve task history in your project's git repository, set `WORKSPACE_DIR` to a directory inside your project:
+
+```bash
+# In .motspilot/config
+WORKSPACE_DIR="motspilot-data"
+```
+
+This tells motspilot to store `tasks/` and `archive/` at `<PROJECT_ROOT>/motspilot-data/` instead of inside the motspilot tool directory. Then commit `motspilot-data/` to your project's git repo:
+
+```
+your-project/
+├── motspilot/                 # symlink/submodule (gitignored or submodule)
+├── motspilot-data/            # committed to YOUR repo
+│   ├── tasks/
+│   │   └── csv-export/
+│   │       ├── 01_requirements.md
+│   │       ├── 02_architecture.md
+│   │       └── ...
+│   └── archive/
+│       └── completed-feature/
+└── src/
+```
+
+**Why this matters:**
+- Task data survives even if motspilot is uninstalled or the symlink breaks
+- Architecture decisions and development summaries are part of your project's history
+- Other team members can read past task artifacts without running motspilot
+- `git log motspilot-data/` shows the evolution of feature development decisions
 
 ---
 

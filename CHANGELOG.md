@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `WORKSPACE_DIR` config option — store task artifacts in the project repo instead of inside motspilot's own directory. Enables version-controlling task data alongside project code.
+- Installation guide in README — symlink, submodule, and direct clone options with step-by-step instructions.
+
+### Fixed
+- Case-insensitive meta key matching in `list_tasks()` for compatibility with tasks created by older versions.
+
 ## [1.0.2] - 2026-02-24
 
 ### Changed

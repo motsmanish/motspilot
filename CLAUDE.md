@@ -11,14 +11,17 @@ motspilot is a 5-phase AI pipeline for adding features to **existing application
 When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot"):
 
 1. Read `motspilot/PIPELINE_ORCHESTRATOR.md` for full instructions
-2. Read `motspilot/.motspilot/current_task` to find the active task name
-3. Read the work order: `motspilot/.motspilot/workspace/tasks/<task-name>/pipeline_workorder.md`
-4. Read requirements: `motspilot/.motspilot/workspace/tasks/<task-name>/01_requirements.md`
-5. Check for framework guide: `motspilot/prompts/frameworks/<FRAMEWORK>.md`
-6. Run each phase as a Task subagent (general-purpose agent type)
-7. Check `AUTO_APPROVE` in config (default `all` = no pausing; set `none` to pause between phases)
-8. Write outputs to `motspilot/.motspilot/workspace/tasks/<task-name>/`
-9. **On completion: archive automatically** — run `./motspilot/motspilot.sh archive --task=<name>`
+2. Read `motspilot/.motspilot/config` — check `WORKSPACE_DIR` to find where task data lives
+   - If `WORKSPACE_DIR` is set (e.g., `"motspilot-data"`): workspace is at `<PROJECT_ROOT>/<WORKSPACE_DIR>/`
+   - If empty/unset: workspace is at `motspilot/.motspilot/workspace/`
+3. Read `motspilot/.motspilot/current_task` to find the active task name
+4. Read the work order: `<workspace>/tasks/<task-name>/pipeline_workorder.md`
+5. Read requirements: `<workspace>/tasks/<task-name>/01_requirements.md`
+6. Check for framework guide: `motspilot/prompts/frameworks/<FRAMEWORK>.md`
+7. Run each phase as a Task subagent (general-purpose agent type)
+8. Check `AUTO_APPROVE` in config (default `all` = no pausing; set `none` to pause between phases)
+9. Write outputs to `<workspace>/tasks/<task-name>/`
+10. **On completion: archive automatically** — run `./motspilot/motspilot.sh archive --task=<name>`
 
 ## Phases
 
@@ -72,16 +75,17 @@ pending → in_progress → [auto-archived on completion]
 ## Structure
 
 ```
-motspilot/
-  motspilot.sh                    # Shell utility (filing system, not engine)
-  PIPELINE_ORCHESTRATOR.md        # Claude Code orchestration instructions
-  prompts/                        # Thinking frameworks (one per phase)
-  prompts/frameworks/             # Framework-specific guides (cakephp.md, etc.)
+motspilot/                            # The tool
+  motspilot.sh                        # Shell utility (filing system, not engine)
+  PIPELINE_ORCHESTRATOR.md            # Claude Code orchestration instructions
+  prompts/                            # Thinking frameworks (one per phase)
+  prompts/frameworks/                 # Framework-specific guides (cakephp.md, etc.)
   .motspilot/
-    config                        # Project settings
-    current_task                  # Active task name
-    workspace/
-      tasks/<name>/               # Active task artifacts
-      archive/<name>/             # Completed task artifacts
+    config                            # Project settings (includes WORKSPACE_DIR)
+    current_task                      # Active task name
     logs/
+
+<workspace>/                          # WORKSPACE_DIR or .motspilot/workspace/
+  tasks/<name>/                       # Active task artifacts
+  archive/<name>/                     # Completed task artifacts
 ```

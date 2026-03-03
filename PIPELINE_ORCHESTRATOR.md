@@ -6,28 +6,32 @@ When the user says **"run motspilot pipeline"**, **"run motspilot"**, or **"go m
 
 ## Step 1 — Verify Prerequisites
 
-1. Read the work order file. It is at:
-   `motspilot/.motspilot/workspace/tasks/<task-name>/pipeline_workorder.md`
+1. Read the config for project settings and workspace location:
+   `motspilot/.motspilot/config`
+   - Note the `WORKSPACE_DIR` setting. If set, the workspace base is `<WORKSPACE_DIR>/` (relative to project root). Otherwise, the workspace is at `motspilot/.motspilot/workspace/`.
+   - Use `<workspace>` below to refer to the resolved workspace base path.
 
-   To find the current task name, read:
+2. Find the current task name:
    `motspilot/.motspilot/current_task`
 
-2. From the work order, note:
+3. Read the work order file:
+   `<workspace>/tasks/<task-name>/pipeline_workorder.md`
+   - The work order also contains a **Workspace** field confirming the path.
+
+4. From the work order, note:
    - **Task name** (you will need this to archive at the end)
    - **Start from phase** (default: architecture)
    - **Project root**, language, framework, test command
 
-3. Read the full requirements:
-   `motspilot/.motspilot/workspace/tasks/<task-name>/01_requirements.md`
+5. Read the full requirements:
+   `<workspace>/tasks/<task-name>/01_requirements.md`
 
-4. Read `motspilot/.motspilot/config` for project settings.
-
-5. Check for a framework guide:
+6. Check for a framework guide:
    `motspilot/prompts/frameworks/<FRAMEWORK>.md`
    If it exists, you will include it in every subagent prompt. If not, the subagents work without framework-specific guidance.
 
-6. Check the task checkpoint:
-   `motspilot/.motspilot/workspace/tasks/<task-name>/checkpoint`
+7. Check the task checkpoint:
+   `<workspace>/tasks/<task-name>/checkpoint`
    - If it contains a phase with `|pending`, ask the user: "Resume from `[phase]` or start fresh from architecture?"
 
 If prerequisites are missing, tell the user to run `./motspilot.sh go --task=<name> "description"` first.

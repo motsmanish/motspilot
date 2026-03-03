@@ -43,12 +43,14 @@ fi
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
 MOTSPILOT_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORK_DIR="${MOTSPILOT_DIR}/.motspilot/workspace"
-TASKS_DIR="${WORK_DIR}/tasks"
-ARCHIVE_DIR="${WORK_DIR}/archive"
 LOG_DIR="${MOTSPILOT_DIR}/.motspilot/logs"
 CONFIG_FILE="${MOTSPILOT_DIR}/.motspilot/config"
 CURRENT_TASK_FILE="${MOTSPILOT_DIR}/.motspilot/current_task"
+
+# Workspace paths (defaults — may be overridden by WORKSPACE_DIR in config)
+WORK_DIR="${MOTSPILOT_DIR}/.motspilot/workspace"
+TASKS_DIR="${WORK_DIR}/tasks"
+ARCHIVE_DIR="${WORK_DIR}/archive"
 
 # ─── Phase definitions ───────────────────────────────────────────────────────
 
@@ -122,10 +124,24 @@ BANNER
     echo -e "${NC}"
 }
 
+# ─── Workspace resolution ─────────────────────────────────────────────────────
+
+resolve_workspace() {
+    # If WORKSPACE_DIR is set in config, use it (relative to PROJECT_ROOT)
+    if [[ -n "${WORKSPACE_DIR:-}" ]]; then
+        local project_root
+        project_root="$(cd "${MOTSPILOT_DIR}/${PROJECT_ROOT:-..}" && pwd)"
+        WORK_DIR="${project_root}/${WORKSPACE_DIR}"
+        TASKS_DIR="${WORK_DIR}/tasks"
+        ARCHIVE_DIR="${WORK_DIR}/archive"
+    fi
+    mkdir -p "$TASKS_DIR" "$ARCHIVE_DIR" "$LOG_DIR"
+}
+
 # ─── Config ──────────────────────────────────────────────────────────────────
 
 ensure_config() {
-    mkdir -p "$TASKS_DIR" "$ARCHIVE_DIR" "$LOG_DIR"
+    mkdir -p "$LOG_DIR"
 
     if [[ ! -f "$CONFIG_FILE" ]]; then
         mkdir -p "$(dirname "$CONFIG_FILE")"
@@ -164,6 +180,12 @@ TEST_CMD=""
 
 # Deploy command (used in delivery phase)
 DEPLOY_CMD="echo 'Deploy not configured — edit .motspilot/config'"
+
+# Workspace directory (optional — store task artifacts in the project repo instead of motspilot/)
+# Path is relative to PROJECT_ROOT. When set, tasks/ and archive/ live here instead of .motspilot/workspace/
+# This allows task data to be committed to the project's git repository.
+# Example: WORKSPACE_DIR="motspilot-data"
+WORKSPACE_DIR=""
 EOF
         return 1 # signal that config was just created
     fi
@@ -459,6 +481,14 @@ write_workorder() {
     local description
     description=$(task_meta_get "$name" "DESCRIPTION")
 
+    # Compute workspace path relative to project root (for work order references)
+    local workspace_rel
+    if [[ -n "${WORKSPACE_DIR:-}" ]]; then
+        workspace_rel="${WORKSPACE_DIR}"
+    else
+        workspace_rel="motspilot/.motspilot/workspace"
+    fi
+
     cat >"${tdir}/pipeline_workorder.md" <<EOF
 # motspilot Pipeline Work Order
 
@@ -472,25 +502,26 @@ write_workorder() {
 **Language version**: ${LANGUAGE_VERSION:-"(not set)"}
 **Framework**: ${FRAMEWORK:-"(not set)"}
 **Test command**: ${TEST_CMD:-"(not set)"}
+**Workspace**: ${workspace_rel}
 
 ## Requirements (preview)
 
 ${req_preview}
 
-[Full requirements: motspilot/.motspilot/workspace/tasks/${name}/01_requirements.md]
+[Full requirements: ${workspace_rel}/tasks/${name}/01_requirements.md]
 
 ## Artifact Paths
 
 All phase artifacts for this task are stored in:
-  motspilot/.motspilot/workspace/tasks/${name}/
+  ${workspace_rel}/tasks/${name}/
 
 | # | Phase        | Thinking Framework               | Artifact                                            |
 |---|--------------|----------------------------------|-----------------------------------------------------|
-| 2 | Architecture | motspilot/prompts/architecture.md | tasks/${name}/02_architecture.md |
-| 3 | Development  | motspilot/prompts/development.md  | tasks/${name}/03_development.md  |
-| 4 | Testing      | motspilot/prompts/testing.md      | tasks/${name}/04_testing.md      |
-| 5 | Verification | motspilot/prompts/verification.md | tasks/${name}/05_verification.md |
-| 6 | Delivery     | motspilot/prompts/delivery.md     | tasks/${name}/06_delivery.md     |
+| 2 | Architecture | motspilot/prompts/architecture.md | ${workspace_rel}/tasks/${name}/02_architecture.md |
+| 3 | Development  | motspilot/prompts/development.md  | ${workspace_rel}/tasks/${name}/03_development.md  |
+| 4 | Testing      | motspilot/prompts/testing.md      | ${workspace_rel}/tasks/${name}/04_testing.md      |
+| 5 | Verification | motspilot/prompts/verification.md | ${workspace_rel}/tasks/${name}/05_verification.md |
+| 6 | Delivery     | motspilot/prompts/delivery.md     | ${workspace_rel}/tasks/${name}/06_delivery.md     |
 
 ## Orchestration Instructions
 
@@ -538,8 +569,8 @@ list_tasks() {
             local name
             name=$(basename "$tdir")
             local status description
-            status=$(grep "^STATUS=" "${tdir}/meta" | cut -d= -f2-)
-            description=$(grep "^DESCRIPTION=" "${tdir}/meta" | cut -d= -f2-)
+            status=$(grep -i "^STATUS=" "${tdir}/meta" | head -1 | cut -d= -f2- || echo "")
+            description=$(grep -i "^DESCRIPTION=" "${tdir}/meta" | head -1 | cut -d= -f2- || echo "")
 
             local current
             current=$(get_current_task)
@@ -571,8 +602,8 @@ list_tasks() {
             [[ -f "${adir}/meta" ]] || continue
             local name description archived_at
             name=$(basename "$adir")
-            description=$(grep "^DESCRIPTION=" "${adir}/meta" | cut -d= -f2-)
-            archived_at=$(grep "^ARCHIVED_AT=" "${adir}/meta" | cut -d= -f2- | cut -c1-10)
+            description=$(grep -i "^DESCRIPTION=" "${adir}/meta" | head -1 | cut -d= -f2- || echo "")
+            archived_at=$(grep -i "^ARCHIVED_AT=" "${adir}/meta" | head -1 | cut -d= -f2- | cut -c1-10 || echo "")
             printf "  ${DIM}✓ %-25s %-12s %s${NC}\n" "$name" "${archived_at:-unknown}" "$description"
             archived_count=$((archived_count + 1))
         done < <(find "$ARCHIVE_DIR" -maxdepth 1 -mindepth 1 -type d -print0 2>/dev/null | sort -z)
@@ -767,7 +798,11 @@ main() {
     local command="${1:-help}"
     shift || true
 
-    mkdir -p "$TASKS_DIR" "$ARCHIVE_DIR" "$LOG_DIR"
+    # Load config and resolve workspace path (WORKSPACE_DIR override)
+    if [[ "$command" != "init" ]]; then
+        ensure_config 2>/dev/null || true
+        resolve_workspace
+    fi
 
     case "$command" in
 
@@ -783,6 +818,8 @@ main() {
                 exit 0
             fi
 
+            resolve_workspace
+
             echo ""
             echo -e "  ${BOLD}Ready. Create your first task:${NC}"
             echo ""
@@ -792,10 +829,10 @@ main() {
 
         # ── go ──────────────────────────────────────────────────────────────
         go)
-            ensure_config || {
+            if [[ ! -f "$CONFIG_FILE" ]]; then
                 log ERROR "Run ./motspilot.sh init first"
                 exit 1
-            }
+            fi
 
             local task_name=""
             local from_phase="architecture"
