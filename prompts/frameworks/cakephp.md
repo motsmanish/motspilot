@@ -206,6 +206,73 @@ Assume every variable contains malicious HTML:
 
 ---
 
+## Email Template Patterns
+
+**Always use a dedicated email template** — never hardcode HTML in Shell, Table, Entity, or Service files.
+
+### Rules
+- Create email templates in `templates/email/html/` (e.g., `email_hnc_budget_threshold.php`)
+- Pass only the variables the template needs via the `vars` array — no pre-built HTML
+- Use the same inline styling conventions as existing templates (explicit `color:#333333`, `font-size:13px`, `font-family:Montserrat,...`, `border-bottom:1px solid #dddddd`, etc.)
+- Match the look and feel of existing email templates (e.g., `email_hnc_weekly_profitability.php`)
+
+### Example — Correct (template approach)
+```php
+// In Shell/Service — send data, not HTML
+sendEmail([
+    'to' => readAppEmail('TEAM_EMAIL'),
+    'subject' => __('Weekly Report - {0} items', $count),
+    'template' => 'email_my_report',
+    'vars' => [
+        'hello' => 'Team',
+        'rows' => $rows,
+        'totalCount' => $count,
+        'monthDisplay' => date('F Y'),
+    ],
+]);
+```
+
+```php
+// In templates/email/html/email_my_report.php — all HTML lives here
+<?php
+$thStyle = 'padding:8px 10px;text-align:left;border-bottom:2px solid #333333;font-size:13px;color:#333333;white-space:nowrap;';
+$tdStyle = 'padding:6px 10px;border-bottom:1px solid #dddddd;font-size:13px;color:#333333;white-space:nowrap;';
+?>
+<p style="color:#333333;margin:0 0 16px 0;">Report for <strong><?= h($monthDisplay) ?></strong></p>
+<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-family:Montserrat,Helvetica,Arial,sans-serif;">
+    <thead>
+        <tr style="background-color:#f8f8f8;">
+            <th style="<?= $thStyle ?>">Column</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($rows as $i => $row): ?>
+        <tr style="background-color:<?= ($i % 2 === 0) ? '#ffffff' : '#f9f9f9' ?>;">
+            <td style="<?= $tdStyle ?>"><?= h($row['value']) ?></td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
+```
+
+### Example — Wrong (inline HTML in Shell)
+```php
+// DON'T do this — HTML does not belong in Shell/Table/Entity files
+$body = '<table border="1"><tr><th>Order</th></tr>';
+foreach ($rows as $row) {
+    $body .= '<tr><td>' . $row['id'] . '</td></tr>';
+}
+$body .= '</table>';
+sendEmail(['template' => 'dump', 'vars' => ['body' => $body]]);
+```
+
+### Reference templates
+- `templates/email/html/email_hnc_weekly_profitability.php` — table report with totals row
+- `templates/email/html/email_hnc_budget_threshold.php` — summary + data table
+- `templates/layout/email/html/default_email_layout.php` — shared layout (header, footer, hello block)
+
+---
+
 ## Route Patterns
 
 Read the existing routes file. Understand the patterns. Add yours at the end of the appropriate scope. Ask: "Could my route pattern accidentally match a URL that something else is supposed to handle?"
