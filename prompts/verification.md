@@ -59,6 +59,17 @@ Look at the test files. Then look at the code. Ask:
 
 A test that only checks `response == 200` doesn't prove anything works. It proves the page didn't crash. That's a start, not a finish.
 
+### You verify visual output
+
+If the feature generates emails, PDFs, reports, or any user-facing output:
+
+- **Send a test and visually verify it renders correctly** — fonts, colors, contrast, spacing
+- Check for white-on-white or invisible text issues (especially in HTML emails where layout styles can override inline styles)
+- Compare against an existing similar output — does the new one match the established look and feel?
+- If the project has a local email catcher (MailHog, Mailpit, etc.), use it to inspect the rendered email
+
+A feature that "sends an email" isn't done until someone has looked at that email.
+
 ### You think about production
 
 - "If this deploys and the migration fails halfway, what state is the database in?"

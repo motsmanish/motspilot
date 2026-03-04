@@ -143,6 +143,18 @@ Bug reports, shell script improvements, and documentation fixes are also welcome
 
 ---
 
+## Public Repository Rules
+
+motspilot is a public repository. All content — examples, docs, framework guides — must be generic:
+
+- **Never use client names, brand names, or product-specific text** in examples or documentation. Use generic placeholders (`APP_NAME`, `Team`, `example.com`).
+- **Never include real URLs, email addresses, or API keys** — even in commented-out examples.
+- **File references are OK** — referencing a filename like `email_weekly_report.php` is fine; referencing `[ClientName] Weekly Report` as email subject text is not.
+
+If you're porting patterns from a real project into a guide, scrub all identifiers first.
+
+---
+
 ## Code Style
 
 - Shell script: follow the existing patterns in `motspilot.sh`

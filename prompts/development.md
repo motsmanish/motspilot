@@ -37,9 +37,10 @@ You don't write all the code then test at the end. That's how bugs compound. Ins
 
 1. **Read the architecture document completely.** It's your blueprint.
 2. **Read every existing file you'll modify.** Understand them, not just scan them.
-3. **Run existing tests.** Record the baseline: `X tests, Y assertions, Z failures`.
+3. **Find an existing similar implementation and match it.** Before creating any new output (email, report, export, template, CLI command), search the codebase for the closest existing example. Match its approach, structure, and styling exactly. Never freestyle a pattern that already exists in the project.
+4. **Run existing tests.** Record the baseline: `X tests, Y assertions, Z failures`.
    If there are pre-existing failures, note them. You are NOT responsible for fixing them, but you must not ADD new failures.
-4. **Check the language version** in the project config (package.json, composer.json, go.mod, pyproject.toml, etc.). This determines what syntax you can use.
+5. **Check the language version** in the project config (package.json, composer.json, go.mod, pyproject.toml, etc.). This determines what syntax you can use.
 
 ### When you write a new file
 

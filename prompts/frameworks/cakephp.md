@@ -460,6 +460,34 @@ curl -s -o /dev/null -w "%{http_code}" https://APP_URL/new-route  # New route �
 
 ---
 
+## Claude Code Skills Reference
+
+Use these Claude Code capabilities at the right time to save effort and catch mistakes early:
+
+| Skill / Pattern | When to Use | Why |
+|---|---|---|
+| **Explore agent** | Before writing anything new | Finds existing patterns to match — prevents reinventing what's already in the codebase |
+| **Plan agent** | Before multi-file features | Architects the approach first so you don't code yourself into a corner |
+| **`/simplify`** | After finishing code | Catches inline HTML in business logic, duplication, missed reuse opportunities |
+| **Background tasks** (`run_in_background`) | DB imports, long migrations, full test suites | Avoids timeout on commands that take > 2 minutes |
+| **Parallel tool calls** | Independent file reads, searches, glob+grep combos | Don't read 5 files sequentially when you can read them all at once |
+| **MailHog API check** (`curl localhost:8025/api/v2/messages`) | After any feature that sends email | Visually verify the email rendered correctly — fonts, colors, no white-on-white |
+
+### When to use which agent
+
+- **Quick search** (specific file/class/function) → Use Glob or Grep directly
+- **Broad exploration** (understanding a module, finding patterns across codebase) → Explore agent
+- **Multi-step implementation planning** → Plan agent
+- **Running a phase of work autonomously** → General-purpose agent
+
+### Common time-wasters to avoid
+
+- Don't build HTML inline in Shell/Table/Entity files — always create a template (see Email Template Patterns above)
+- Don't guess at styling — find an existing email/report and match it exactly
+- Don't run long DB scripts with default timeout — use `run_in_background` or extended timeout
+
+---
+
 ## Self-Doubt Checklist
 
 After completing work, run through these:
