@@ -115,6 +115,18 @@ Each step is a clear business decision. If something goes wrong, a specific erro
 - UI feedback mechanisms (flash messages, toasts)
 - Redirects or navigation
 
+### Automated reports / monitoring: "What if nothing happened?"
+
+Status reports, monitoring jobs, and automated alerts must **always produce output** — even when zero actions were taken. A silent job that only reports problems gives no confidence it's actually running.
+
+- Always send the report (email, Slack, log) regardless of whether actions were taken
+- Include "0 items affected" or "no action needed" explicitly — silence is not a status
+- Include a summary/overview of the data that was checked, so the team can verify correctness
+- Include the date range or period covered
+
+**Bad:** `if ($affectedItems) { sendReport($affectedItems); }` — silent when nothing happens
+**Good:** Always send the report; include both the action summary AND the full data overview
+
 ### Controllers / Handlers: "Am I just translating HTTP to service calls?"
 
 A controller action should be boring. Get input, call service, respond:
