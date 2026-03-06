@@ -488,6 +488,133 @@ Use these Claude Code capabilities at the right time to save effort and catch mi
 
 ---
 
+## Multi-Model Consensus Service
+
+motspilot includes a built-in Multi-Model Consensus service that any pipeline phase can use to get synthesized answers from multiple LLMs (Claude, GPT-4o, Gemini 1.5 Pro).
+
+### Files
+
+```
+motspilot/src/Service/MultiModelConsensusService.php   # Core service (framework-agnostic)
+motspilot/src/Model/Table/ConsensusLogsTable.php       # CakePHP ORM table for logging
+motspilot/src/Command/ConsensusCommand.php             # CLI: bin/cake consensus "prompt"
+motspilot/config/Migrations/20260306120000_CreateConsensusLogs.php
+motspilot/config/consensus.php                         # Config loader (env vars)
+```
+
+### Configuration
+
+API keys are read from environment variables (12-factor). Add to your `.env`:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=AIza...
+```
+
+Load the config in `config/bootstrap.php`:
+
+```php
+Configure::load('consensus');
+```
+
+Or merge into `config/app_local.php`:
+
+```php
+'ConsensusApi' => [
+    'anthropic_api_key' => env('ANTHROPIC_API_KEY', ''),
+    'openai_api_key' => env('OPENAI_API_KEY', ''),
+    'gemini_api_key' => env('GEMINI_API_KEY', ''),
+],
+```
+
+### Autoloading
+
+Add the `Motspilot` namespace to the host project's `composer.json`:
+
+```json
+"autoload": {
+    "psr-4": {
+        "App\\": "src/",
+        "Motspilot\\": "motspilot/src/"
+    }
+}
+```
+
+Then run `composer dump-autoload`.
+
+### Usage from a pipeline phase (via CLI)
+
+```bash
+bin/cake consensus "Design a caching strategy for this API" --phase=architecture
+```
+
+### Usage from PHP code
+
+```php
+use Motspilot\Service\MultiModelConsensusService;
+
+$service = new MultiModelConsensusService([
+    'anthropic_api_key' => Configure::read('ConsensusApi.anthropic_api_key'),
+    'openai_api_key' => Configure::read('ConsensusApi.openai_api_key'),
+    'gemini_api_key' => Configure::read('ConsensusApi.gemini_api_key'),
+]);
+
+$result = $service->run($prompt, 'architecture');
+// $result['synthesis']  — the unified answer
+// $result['responses']  — individual model responses (keyed: claude, gpt4o, gemini)
+// $result['apis_failed'] — which APIs failed and why
+```
+
+### Database setup
+
+```bash
+bin/cake migrations migrate
+```
+
+The `consensus_logs` table stores: `phase_name`, `prompt`, `response_claude`, `response_gpt4o`, `response_gemini`, `synthesis`, `apis_failed` (JSON), `created`.
+
+### Fault tolerance
+
+- Missing API key → that provider is skipped (not an error)
+- API timeout/error → skipped, logged, reason stored in `apis_failed`
+- Minimum 1 response required to synthesize; all 3 fail → throws `RuntimeException`
+- Judge (synthesis) failure → returns `null` for synthesis; raw responses still available
+
+### Gemini API Key in URL — Security Warning
+
+Google's Generative Language API requires the API key as a URL query parameter (`?key=...`). This means the key appears in the full request URI. If your nginx (or any reverse proxy) logs request URIs, **the Gemini API key will be written to access logs in plaintext**.
+
+**This applies to production server deployments only.** Local development via CLI (WSL, Linux, Mac) is not affected — `curl_multi` makes outbound HTTPS calls directly to Google's API with no reverse proxy in the path. There is nothing to fix locally.
+
+**Do NOT suppress all query string logging** — that breaks legitimate logging for your application.
+
+**Targeted fix for production — nginx conditional logging:**
+
+Exclude only outbound requests to Google API endpoints from access logs:
+
+```nginx
+# In your nginx http {} or server {} block:
+map $request_uri $loggable {
+    ~*googleapis.com  0;
+    default           1;
+}
+
+access_log /var/log/nginx/access.log combined if=$loggable;
+```
+
+This preserves full logging for all normal application traffic while excluding Google API calls that contain the key.
+
+**Long-term recommendation:** Switch to **Vertex AI** with service account credentials (JSON key file or Workload Identity). Vertex AI uses OAuth2 bearer tokens in the `Authorization` header — no key in the URL. This eliminates the log exposure issue entirely and is Google's recommended approach for production workloads.
+
+```
+# Vertex AI endpoint (no key in URL):
+POST https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROJECT}/locations/{REGION}/publishers/google/models/gemini-1.5-pro:generateContent
+Authorization: Bearer {OAUTH_TOKEN}
+```
+
+---
+
 ## Self-Doubt Checklist
 
 After completing work, run through these:

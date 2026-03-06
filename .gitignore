@@ -25,6 +25,7 @@ Desktop.ini
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Research / internal docs (keep backup, not for public)
 RESEARCH_PUBLIC_RELEASE.md

@@ -331,6 +331,32 @@ See `prompts/frameworks/cakephp.md` as a reference.
 
 ---
 
+## Multi-Model Consensus
+
+motspilot includes an optional Multi-Model Consensus service that fans out a prompt to 3 LLMs (Claude, GPT-4o, Gemini 1.5 Pro) in parallel, then synthesizes a single authoritative answer via Claude as judge. Any pipeline phase can use it.
+
+```bash
+bin/cake consensus "Design a caching strategy for this API" --phase=architecture
+```
+
+**Setup:** Set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `GEMINI_API_KEY` in your `.env` file. See `prompts/frameworks/cakephp.md` for full integration instructions.
+
+**Fault tolerant:** If 1 or 2 APIs fail, the service proceeds with whatever responses are available. All 3 fail = error. Failed APIs are logged with reasons.
+
+> **Security note — Gemini API key in URL:** Google's API requires the key as a URL query parameter. If your reverse proxy logs full URIs, the key will appear in access logs. Use targeted nginx log exclusion (not blanket query string suppression):
+>
+> ```nginx
+> map $request_uri $loggable {
+>     ~*googleapis.com  0;
+>     default           1;
+> }
+> access_log /var/log/nginx/access.log combined if=$loggable;
+> ```
+>
+> **Long-term:** Switch to Vertex AI with service account credentials to eliminate key-in-URL entirely. See `prompts/frameworks/cakephp.md` for details.
+
+---
+
 ## Core Philosophy
 
 - **Start with the user** — think about who uses the feature before touching code
