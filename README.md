@@ -333,27 +333,21 @@ See `prompts/frameworks/cakephp.md` as a reference.
 
 ## Multi-Model Consensus
 
-motspilot includes an optional Multi-Model Consensus service that fans out a prompt to 3 LLMs (Claude, GPT-4o, Gemini 1.5 Pro) in parallel, then synthesizes a single authoritative answer via Claude as judge. Any pipeline phase can use it.
+Before the pipeline phases begin, motspilot runs a **Multi-Model Consensus** step. It fans out the task requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge. The synthesized output (`00_consensus.md`) is then fed as additional context into every pipeline phase.
+
+The consensus script is a standalone PHP CLI — no framework dependencies, just PHP 8.0+ with curl:
 
 ```bash
-bin/cake consensus "Design a caching strategy for this API" --phase=architecture
+# Direct usage (the pipeline runs this automatically):
+php motspilot/bin/consensus.php --prompt-file=prompt.txt --phase=architecture > output.md
+
+# Or via stdin:
+echo "Design a caching strategy" | php motspilot/bin/consensus.php --phase=general
 ```
 
-**Setup:** Set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `GEMINI_API_KEY` in your `.env` file. See `prompts/frameworks/cakephp.md` for full integration instructions.
+**Setup:** Set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `GEMINI_API_KEY` in `motspilot/.env`.
 
-**Fault tolerant:** If 1 or 2 APIs fail, the service proceeds with whatever responses are available. All 3 fail = error. Failed APIs are logged with reasons.
-
-> **Security note — Gemini API key in URL:** Google's API requires the key as a URL query parameter. If your reverse proxy logs full URIs, the key will appear in access logs. Use targeted nginx log exclusion (not blanket query string suppression):
->
-> ```nginx
-> map $request_uri $loggable {
->     ~*googleapis.com  0;
->     default           1;
-> }
-> access_log /var/log/nginx/access.log combined if=$loggable;
-> ```
->
-> **Long-term:** Switch to Vertex AI with service account credentials to eliminate key-in-URL entirely. See `prompts/frameworks/cakephp.md` for details.
+**Fault tolerant:** If 1 or 2 APIs fail, the service proceeds with whatever responses are available. All 3 fail = error. If consensus fails entirely, the pipeline continues without it — it's an enhancement, not a requirement.
 
 ---
 

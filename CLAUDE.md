@@ -18,15 +18,17 @@ When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot")
 4. Read the work order: `<workspace>/tasks/<task-name>/pipeline_workorder.md`
 5. Read requirements: `<workspace>/tasks/<task-name>/01_requirements.md`
 6. Check for framework guide: `motspilot/prompts/frameworks/<FRAMEWORK>.md`
-7. Run each phase as a Task subagent (general-purpose agent type)
-8. Check `AUTO_APPROVE` in config (default `all` = no pausing; set `none` to pause between phases)
-9. Write outputs to `<workspace>/tasks/<task-name>/`
-10. **On completion: archive automatically** — run `./motspilot/motspilot.sh archive --task=<name>`
+7. **Run Multi-Model Consensus** (Step 1.5 in orchestrator) — fans out requirements to Claude + GPT-4o + Gemini, synthesizes into `00_consensus.md`
+8. Run each phase as a Task subagent (general-purpose agent type), including consensus output as context
+9. Check `AUTO_APPROVE` in config (default `all` = no pausing; set `none` to pause between phases)
+10. Write outputs to `<workspace>/tasks/<task-name>/`
+11. **On completion: archive automatically** — run `./motspilot/motspilot.sh archive --task=<name>`
 
 ## Phases
 
 | Phase | Prompt | Artifact | Writes code? |
 |-------|--------|----------|--------------|
+| Consensus | `bin/consensus.php` (auto) | `tasks/<name>/00_consensus.md` | No |
 | Architecture | `prompts/architecture.md` | `tasks/<name>/02_architecture.md` | No |
 | Development | `prompts/development.md` | `tasks/<name>/03_development.md` | Yes |
 | Testing | `prompts/testing.md` | `tasks/<name>/04_testing.md` | Yes |
@@ -78,6 +80,8 @@ pending → in_progress → [auto-archived on completion]
 motspilot/                            # The tool
   motspilot.sh                        # Shell utility (filing system, not engine)
   PIPELINE_ORCHESTRATOR.md            # Claude Code orchestration instructions
+  bin/consensus.php                   # Standalone multi-model consensus script (PHP 8+, no framework)
+  .env                                # API keys for consensus (ANTHROPIC, OPENAI, GEMINI)
   prompts/                            # Thinking frameworks (one per phase)
   prompts/frameworks/                 # Framework-specific guides (cakephp.md, etc.)
   .motspilot/

@@ -38,6 +38,74 @@ If prerequisites are missing, tell the user to run `./motspilot.sh go --task=<na
 
 ---
 
+## Step 1.5 — Multi-Model Consensus (Pre-Pipeline)
+
+Before starting the subagent phases, run the **Multi-Model Consensus** step. This fans out the full requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge.
+
+### How to run it
+
+1. Build a consensus prompt from the requirements. Write it to a temporary file:
+   `<workspace>/tasks/<task-name>/consensus_prompt.txt`
+
+   The prompt should be:
+   ```
+   You are a senior software architect and developer.
+
+   Below are the full requirements for a feature/project. Analyze them carefully and produce a comprehensive technical plan covering:
+
+   1. Architecture overview — key components, data flow, file structure
+   2. Implementation approach — step-by-step build order, key decisions
+   3. Potential pitfalls and edge cases to watch for
+   4. Specific technical recommendations for the tech stack described
+
+   Be thorough and specific. Your output will be used as the starting context for an AI development pipeline that runs architecture, development, testing, verification, and delivery phases.
+
+   === REQUIREMENTS ===
+   [Full contents of tasks/<task-name>/01_requirements.md]
+
+   === PROJECT CONTEXT ===
+   Language: [LANGUAGE]
+   Framework: [FRAMEWORK]
+   Project root: [PROJECT_ROOT]
+   ```
+
+2. Run the standalone consensus script via Bash:
+   ```bash
+   php motspilot/bin/consensus.php \
+     --prompt-file=<workspace>/tasks/<task-name>/consensus_prompt.txt \
+     --phase=pre-pipeline \
+     > <workspace>/tasks/<task-name>/00_consensus.md 2> <workspace>/tasks/<task-name>/consensus.log
+   ```
+
+3. Check the exit code:
+   - **Exit 0**: Success. Read `00_consensus.md` — this is the synthesized multi-model output.
+   - **Exit 1**: All APIs failed. Log a warning, show the user `consensus.log`, and continue without consensus (the pipeline still works, just without the multi-model head start).
+   - **Exit 2**: Bad config (missing .env or prompt). Show the error from `consensus.log` and ask the user to fix it, or continue without consensus.
+
+4. Log status to the user:
+   ```
+   Multi-Model Consensus: [OK — 3/3 models responded | PARTIAL — 2/3 models responded | SKIPPED — see consensus.log]
+   Consensus output saved to: <workspace>/tasks/<task-name>/00_consensus.md
+   ```
+
+### How consensus output is used
+
+When consensus output exists (`00_consensus.md` is non-empty), include it as **additional context** in every subagent prompt. Add this section after `=== REQUIREMENTS ===` and before `=== PREVIOUS PHASE OUTPUTS ===`:
+
+```
+=== MULTI-MODEL CONSENSUS (Pre-Pipeline Analysis) ===
+[Full contents of tasks/<task-name>/00_consensus.md]
+
+Note: This consensus was synthesized from Claude, GPT-4o, and Gemini analyzing the
+requirements independently. Use it as a strong starting point but apply your own
+judgment — the phase-specific thinking framework takes priority over consensus
+recommendations.
+```
+
+If `00_consensus.md` does not exist or is empty, simply omit this section — the pipeline runs normally without it.
+
+---
+
 ## Step 2 — Run Each Phase in Sequence
 
 Run the 5 phases in order: **architecture → development → testing → verification → delivery**
@@ -74,6 +142,9 @@ App URL: [APP_URL from config]
 
 === REQUIREMENTS ===
 [Full contents of tasks/<task-name>/01_requirements.md]
+
+=== MULTI-MODEL CONSENSUS (Pre-Pipeline Analysis) ===
+[Full contents of tasks/<task-name>/00_consensus.md — or omit this section if file is missing/empty]
 
 === PREVIOUS PHASE OUTPUTS ===
 [For each completed previous phase, full contents labeled by phase name]
