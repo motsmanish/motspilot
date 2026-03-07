@@ -776,7 +776,7 @@
                             <h5 class="mb-1">Multi-Model Consensus <small class="text-muted fw-normal">&mdash; 3 AIs before pipeline starts</small></h5>
                             <span class="badge badge-no">Automatic</span>
                         </div>
-                        <p class="text-muted mb-3">Fans out the task requirements to <strong>Claude + GPT-4o + Gemini</strong> in parallel, collects all responses, then synthesizes a unified starting point via a Claude judge.</p>
+                        <p class="text-muted mb-3">Fans out the task requirements to <strong>Claude + GPT-4o + Gemini</strong> in parallel, collects all responses, then synthesizes via a <strong>3-pass process</strong> (Extract &rarr; Reconcile &rarr; Synthesize) with completeness verification.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Output Files (per task)</strong>
                             <div class="text-muted" style="font-size: 0.85rem;">
@@ -801,7 +801,7 @@
                             <h5 class="mb-1">Architecture <small class="text-muted fw-normal">&mdash; Design only</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document.</p>
+                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Explicit assumption-gating for ambiguous requirements; completeness check against all requirements before finalizing.</p>
                         <div class="accordion" id="archAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -867,7 +867,7 @@
                             <h5 class="mb-1">Development <small class="text-muted fw-normal">&mdash; Build in tiny loops</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase.</p>
+                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Follow-through policy ensures every planned file is completed before summary.</p>
                         <div class="accordion" id="devAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -917,7 +917,7 @@
                             <h5 class="mb-1">Testing <small class="text-muted fw-normal">&mdash; Security-first</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest.</p>
+                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Falls back to manual test checklists when no test framework exists.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Test Priority Order</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -942,7 +942,7 @@
                             <h5 class="mb-1">Verification <small class="text-muted fw-normal">&mdash; Skeptical senior reviewer</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness.</p>
+                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Completeness contract: must read every file from development. Requirements coverage matrix (MET/NOT MET) per requirement.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Verification Checklist</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -967,7 +967,7 @@
                             <h5 class="mb-1">Delivery <small class="text-muted fw-normal">&mdash; Safe and reversible</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions.</p>
+                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Surfaces unresolved verification issues with [VERIFY] markers.</p>
                         <div class="row g-2" style="font-size: 0.85rem;">
                             <div class="col-md-6">
                                 <ul class="text-muted mb-0">

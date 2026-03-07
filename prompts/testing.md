@@ -133,6 +133,16 @@ Record 104: user with already-consumed token → test double-use prevention
 
 ---
 
+## IF NO TEST FRAMEWORK EXISTS
+
+If the project has no test runner, test directory, or test dependencies:
+1. Check the development summary — if the feature is a standalone file (e.g., single HTML file, static site), create a manual test checklist instead of automated tests.
+2. The checklist must cover the same priority order: security, edge cases, happy path, error paths.
+3. Document the checklist in the same output format below, replacing test counts with checklist item counts.
+4. If a test framework DOES exist but has no prior tests, create the first test file following the framework's conventions and document the setup steps.
+
+---
+
 ## AFTER WRITING TESTS
 
 ### Run yours first:

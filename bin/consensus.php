@@ -306,14 +306,27 @@ You are evaluating responses for the **{$phaseName}** phase.
 {$sections}
 
 ## Your task
-1. Extract the best ideas, insights, and correct information from each response.
-2. Identify and resolve any conflicts or contradictions between responses.
-   - When in conflict, favor: correctness > completeness > clarity > simplicity.
-3. Produce ONE authoritative, well-structured answer that synthesizes the best of all available responses.
-4. If a model's response was unavailable, work with what you have.
-5. Do NOT mention which model said what - deliver a single unified answer.
-6. The output must be directly usable by the next pipeline phase - no meta-commentary.
-7. Be comprehensive. Include all relevant details, code, examples, and structure from the best parts of each response.
+
+### Pass 1 — Extract
+For each response, list every distinct idea, recommendation, technical detail, and code example. Do not skip anything — even minor details matter. If a model's response was unavailable, note it and continue.
+
+### Pass 2 — Reconcile
+Compare the extracted points across models:
+- Identify agreements (shared by 2+ models) — these form your high-confidence core.
+- Identify conflicts — resolve each one explicitly. Favor: correctness > completeness > clarity > simplicity. State which position you chose and why in a brief internal note (do not include this in the final output).
+- Identify unique points (only one model mentioned) — include them if they are correct and relevant.
+
+### Pass 3 — Synthesize
+Produce ONE authoritative, well-structured answer that merges all surviving points into a coherent whole.
+
+### Completeness contract
+Every unique technical insight, recommendation, code example, and architectural decision from any response MUST appear in your synthesis. After writing your synthesis, mentally verify: for each model that responded, can every key point from that model be found somewhere in your output? If not, add what's missing.
+
+### Output rules
+- Do NOT mention which model said what — deliver a single unified answer.
+- Do NOT include meta-commentary, preamble, or explanation of your process.
+- The output must be directly usable by the next pipeline phase.
+- Only include information that can be traced back to one or more of the responses — do not invent new recommendations.
 PROMPT;
 
     stderr('Synthesizing via Claude judge...', $logFile);
@@ -348,29 +361,42 @@ You are an analytical judge comparing outputs from multiple AI models.
 
 ## Your task — Unique Contributions Analysis
 
-Identify what each AI **uniquely** contributed that the others missed. Ignore common/shared points entirely.
+Work in two passes:
 
-Format your output exactly like this:
+### Pass 1 — Catalog every point
+For each model, create a complete list of every distinct idea, recommendation, technical detail, code snippet, and design decision. Be thorough — even small details count.
+
+### Pass 2 — Cross-reference and filter
+For each point in each model's list, check whether ANY other model covered the same idea (even if worded differently). Remove shared points. What remains are the unique contributions.
+
+### Output format (follow exactly)
 
 ---
 
 # Unique Contributions by Each AI
 
 ## Claude — Unique Points
-(List points, ideas, details, or approaches that ONLY Claude mentioned and the other models did not cover. If Claude had no response or no unique points, say "No unique contributions" or "No response received.")
+- **[Short label]**: [Specific description of the unique point — quote or paraphrase the actual content so the reader understands the value without reading the full response]
+(If Claude had no response, say "No response received." If no unique points, say "No unique contributions.")
 
 ## GPT-4o — Unique Points
-(List points, ideas, details, or approaches that ONLY GPT-4o mentioned and the other models did not cover. If GPT-4o had no response or no unique points, say "No unique contributions" or "No response received.")
+- **[Short label]**: [Specific description]
+(Same rules as above.)
 
 ## Gemini — Unique Points
-(List points, ideas, details, or approaches that ONLY Gemini mentioned and the other models did not cover. If Gemini had no response or no unique points, say "No unique contributions" or "No response received.")
+- **[Short label]**: [Specific description]
+(Same rules as above.)
 
 ## Notable Conflicts
-(List any points where the models directly contradicted each other. For each conflict, state what each model said and which position is more likely correct and why. If no conflicts, say "No notable conflicts.")
+(For each conflict: state what each model said, which position is more likely correct, and why. If no conflicts, say "No notable conflicts.")
 
 ---
 
-Be specific. Quote or paraphrase the actual unique content. Do not be vague — the reader should understand exactly what value each AI added without reading the full individual responses.
+### Quality rules
+- Be specific — vague summaries like "provided more detail" are not acceptable. State WHAT detail.
+- Every bullet must contain enough context that the reader understands the unique value without reading the original response.
+- If a model provided a unique code example, technique, or specific parameter value, include it.
+- Do not pad sections. If a model truly had no unique contributions, say so.
 PROMPT;
 
     stderr('Analyzing unique contributions per AI...', $logFile);

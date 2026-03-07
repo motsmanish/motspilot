@@ -23,6 +23,8 @@ Ask yourself:
 
 Write this down. It becomes your north star for every design decision that follows.
 
+**If the requirements are ambiguous or silent on a point that affects your design, state your assumption explicitly** (e.g., "Requirements don't specify auth behavior for X — I'm assuming Y because Z"). Never silently fill in gaps.
+
 ### 2. Get a feel for the codebase
 
 Don't just read files — understand the personality of this project.
@@ -141,3 +143,5 @@ After thinking through all the above, produce an architecture document that incl
 10. **Rollback Plan** — How to undo everything cleanly
 
 The output should read like a senior developer explaining their design to a teammate — not like a form that was filled in.
+
+**Completeness check:** Before finalizing, verify every requirement from the requirements document is addressed somewhere in your architecture. If a requirement is intentionally deferred, state it explicitly in the Alternatives Considered section.

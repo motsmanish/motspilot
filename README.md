@@ -198,7 +198,7 @@ Requirements → Architecture → Development → Testing → Verification → D
 | 5 | Verification | Senior code review — security, correctness, framework patterns | No |
 | 6 | Delivery | Deployment steps, rollback plan, git commit message | No |
 
-Each phase uses a **thinking framework** (in `prompts/`) — not a checklist.
+Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Frameworks include prompt engineering patterns: completeness contracts, assumption-gating for ambiguous requirements, follow-through policies, and requirements coverage tracking.
 Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one exists for your framework.
 
 ---
@@ -333,7 +333,7 @@ See `prompts/frameworks/cakephp.md` as a reference.
 
 ## Multi-Model Consensus
 
-Before the pipeline phases begin, motspilot runs a **Multi-Model Consensus** step. It fans out the task requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge. The synthesized output (`00_consensus.md`) is then fed as additional context into every pipeline phase.
+Before the pipeline phases begin, motspilot runs a **Multi-Model Consensus** step. It fans out the task requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge using a **3-pass process** (Extract → Reconcile → Synthesize) with a completeness contract ensuring no unique insight is lost. The synthesized output is then fed as additional context into every pipeline phase.
 
 The consensus script is a standalone PHP CLI — no framework dependencies, just PHP 8.0+ with curl:
 

@@ -27,6 +27,14 @@ They don't need to understand every line of code. They need to know:
 
 ---
 
+## MISSING INFORMATION
+
+If the verification report flagged issues that were NOT fixed, list them in Section 8 (Known Limitations) with their severity. Do not silently omit unresolved issues — the deployer needs to know what risks remain.
+
+If the development summary is missing information you need (e.g., no migration details, no test command), state what's missing and provide the best deployment steps you can with explicit "[VERIFY]" markers where the deployer should double-check.
+
+---
+
 ## YOUR OUTPUT
 
 ### 1. What Changed (human summary)

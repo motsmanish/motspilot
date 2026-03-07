@@ -174,6 +174,16 @@ After completing all loops, run through these honestly:
 
 ---
 
+## FOLLOW-THROUGH POLICY
+
+**Do not stop early.** You must create or modify every file listed in the architecture document's File Map before writing your summary. If you realize mid-implementation that a file from the architecture is unnecessary, skip it and explain why in the summary — but never silently omit planned work.
+
+**Keep using tools until done.** After each file you create or modify, check what's next in the architecture. Do not write the summary until all implementation work is complete. If you encounter an error while editing a file, fix it before moving on.
+
+**If you get stuck:** If the architecture is unclear about how to implement something, make a reasonable decision, implement it, and document the deviation in your summary. Do not leave partial or placeholder implementations.
+
+---
+
 ## OUTPUT
 
 For each file:

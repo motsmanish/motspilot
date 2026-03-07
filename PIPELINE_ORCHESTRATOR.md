@@ -58,7 +58,9 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
    3. Potential pitfalls and edge cases to watch for
    4. Specific technical recommendations for the tech stack described
 
-   Be thorough and specific. Your output will be used as the starting context for an AI development pipeline that runs architecture, development, testing, verification, and delivery phases.
+   Be thorough and specific. Include concrete details: file names, function signatures, data structures, configuration values, and code snippets where helpful. Your output will be used as the starting context for an AI development pipeline that runs architecture, development, testing, verification, and delivery phases.
+
+   If the requirements are ambiguous on any point, state your assumption explicitly before proceeding.
 
    === REQUIREMENTS ===
    [Full contents of tasks/<task-name>/01_requirements.md]
