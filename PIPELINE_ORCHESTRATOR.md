@@ -109,21 +109,7 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
 
 ### How consensus output is used
 
-When `04_synthesis.md` exists and is non-empty, include it as **additional context** in every subagent prompt. Add this section after `=== REQUIREMENTS ===` and before `=== PREVIOUS PHASE OUTPUTS ===`:
-
-```
-=== MULTI-MODEL CONSENSUS (Pre-Pipeline Analysis) ===
-[Full contents of tasks/<task-name>/consensus/04_synthesis.md]
-
-Note: This consensus was synthesized from Claude, GPT-4o, and Gemini analyzing the
-requirements independently. Use it as a strong starting point but apply your own
-judgment — the phase-specific thinking framework takes priority over consensus
-recommendations.
-
-For unique insights each AI contributed, see: consensus/05_differences.md
-```
-
-If the consensus folder does not exist or `04_synthesis.md` is empty, simply omit this section — the pipeline runs normally without it.
+When `04_synthesis.md` exists and is non-empty, include it in the `<consensus>` tag in every subagent prompt (see prompt template in Step 2). If the consensus folder does not exist or `04_synthesis.md` is empty, omit the `<consensus>` tag entirely — the pipeline runs normally without it.
 
 ---
 
@@ -142,39 +128,50 @@ motspilot/.motspilot/workspace/tasks/<task-name>/
 
 For each phase, use the **Task tool** (`subagent_type: general-purpose`).
 
-**Assemble the subagent prompt from these parts:**
+**Assemble the subagent prompt from these parts, using XML tags for unambiguous parsing:**
 
-```
-=== MOTSPILOT PHASE: [PHASE NAME] ===
+```xml
+<motspilot_phase name="[PHASE NAME]">
 
-=== THINKING FRAMEWORK ===
+<thinking_framework>
 [Full contents of motspilot/prompts/<phase>.md]
+</thinking_framework>
 
-=== FRAMEWORK GUIDE ===
+<framework_guide>
 [Full contents of motspilot/prompts/frameworks/<FRAMEWORK>.md — or "No framework guide available. Use your knowledge of the project's framework based on the codebase exploration." if no guide exists]
+</framework_guide>
 
-=== PROJECT CONFIGURATION ===
+<project_config>
 Project root: [PROJECT_ROOT from config]
 Language: [LANGUAGE from config]
 Language version: [LANGUAGE_VERSION from config]
 Framework: [FRAMEWORK from config]
 Test command: [TEST_CMD from config]
 App URL: [APP_URL from config]
+</project_config>
 
-=== REQUIREMENTS ===
+<requirements>
 [Full contents of tasks/<task-name>/01_requirements.md]
+</requirements>
 
-=== MULTI-MODEL CONSENSUS (Pre-Pipeline Analysis) ===
-[Full contents of tasks/<task-name>/consensus/04_synthesis.md — or omit this section if file is missing/empty]
+<consensus>
+[Full contents of tasks/<task-name>/consensus/04_synthesis.md — or omit this tag entirely if file is missing/empty]
 
-=== PREVIOUS PHASE OUTPUTS ===
+Note: This consensus was synthesized from Claude, GPT-4o, and Gemini analyzing the requirements independently. Use it as a strong starting point but apply your own judgment — the phase-specific thinking framework takes priority over consensus recommendations.
+</consensus>
+
+<previous_phases>
 [For each completed previous phase, full contents labeled by phase name]
+</previous_phases>
 
-=== YOUR TASK ===
+<task>
 [Phase-specific task — see below]
 
 Write your final output to:
 motspilot/.motspilot/workspace/tasks/<task-name>/[NN_phase.md]
+</task>
+
+</motspilot_phase>
 ```
 
 ---

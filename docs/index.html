@@ -748,7 +748,7 @@
         <!-- ============ PHASES ============ -->
         <div class="tab-pane fade" id="phases" role="tabpanel">
 
-            <p class="text-muted mb-4">Before the phases begin, a <strong>multi-model consensus</strong> step queries 3 AIs in parallel and synthesizes a unified starting context. Each phase then uses a <strong>thinking framework</strong> (not a checklist) and receives the <strong>framework guide</strong> for your project's framework. Phases that write code actually create and modify files in the codebase.</p>
+            <p class="text-muted mb-4">Before the phases begin, a <strong>multi-model consensus</strong> step queries 3 AIs in parallel and synthesizes a unified starting context. Each phase then uses a <strong>thinking framework</strong> (not a checklist) and receives the <strong>framework guide</strong> for your project's framework. Prompt engineering techniques applied across all phases: XML-tagged prompt assembly, investigate-before-acting guards, anti-overengineering clauses, phase-specific self-checks, few-shot examples, and quote-grounded findings.</p>
 
             <!-- Phase 1 -->
             <div class="card phase-card p-4 mb-4">
@@ -801,7 +801,7 @@
                             <h5 class="mb-1">Architecture <small class="text-muted fw-normal">&mdash; Design only</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Explicit assumption-gating for ambiguous requirements; completeness check against all requirements before finalizing.</p>
+                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Includes <code>&lt;investigate_before_designing&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, assumption-gating, and <code>&lt;self_check&gt;</code> verification before finalizing.</p>
                         <div class="accordion" id="archAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -867,7 +867,7 @@
                             <h5 class="mb-1">Development <small class="text-muted fw-normal">&mdash; Build in tiny loops</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Follow-through policy ensures every planned file is completed before summary.</p>
+                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Includes <code>&lt;investigate_before_coding&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, follow-through policy, and <code>&lt;self_check&gt;</code> verification.</p>
                         <div class="accordion" id="devAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -917,7 +917,7 @@
                             <h5 class="mb-1">Testing <small class="text-muted fw-normal">&mdash; Security-first</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Falls back to manual test checklists when no test framework exists.</p>
+                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Includes <code>&lt;investigate_before_testing&gt;</code> guard, few-shot <code>&lt;example&gt;</code> blocks for test naming, and <code>&lt;self_check&gt;</code> verification. Falls back to manual test checklists when no test framework exists.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Test Priority Order</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -942,7 +942,7 @@
                             <h5 class="mb-1">Verification <small class="text-muted fw-normal">&mdash; Skeptical senior reviewer</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Completeness contract: must read every file from development. Requirements coverage matrix (MET/NOT MET) per requirement.</p>
+                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Includes <code>&lt;investigate_before_judging&gt;</code> guard requiring quoted code for every finding. Completeness contract: must read every file. Requirements coverage matrix (MET/NOT MET) per requirement. <code>&lt;self_check&gt;</code> verification.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Verification Checklist</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -967,7 +967,7 @@
                             <h5 class="mb-1">Delivery <small class="text-muted fw-normal">&mdash; Safe and reversible</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Surfaces unresolved verification issues with [VERIFY] markers.</p>
+                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Includes <code>&lt;investigate_before_documenting&gt;</code> guard and <code>&lt;self_check&gt;</code> verification. Surfaces unresolved verification issues with [VERIFY] markers.</p>
                         <div class="row g-2" style="font-size: 0.85rem;">
                             <div class="col-md-6">
                                 <ul class="text-muted mb-0">
@@ -1433,24 +1433,35 @@
             <!-- How the prompt architecture works -->
             <h4 class="mt-5 mb-3">Prompt Architecture</h4>
             <div class="card p-4">
-                <p class="text-muted mb-3">Each subagent receives a layered prompt assembled by the orchestrator:</p>
+                <p class="text-muted mb-3">Each subagent receives a layered prompt assembled by the orchestrator using XML tags for unambiguous section parsing:</p>
                 <div class="code-block">
-                    <span class="comment">=== MOTSPILOT PHASE: [phase name] ===</span><br><br>
-                    <span class="comment">=== THINKING FRAMEWORK ===</span><br>
+                    <span class="comment">&lt;motspilot_phase name="[phase name]"&gt;</span><br><br>
+                    <span class="comment">&lt;thinking_framework&gt;</span><br>
                     <span style="color: var(--accent-light);">[Full contents of prompts/&lt;phase&gt;.md]</span><br>
-                    <span style="color: #6a737d;">Universal thinking patterns &mdash; how to approach the work</span><br><br>
-                    <span class="comment">=== FRAMEWORK GUIDE ===</span><br>
+                    <span style="color: #6a737d;">Includes &lt;investigate_before_*&gt;, &lt;anti_overengineering&gt;, &lt;self_check&gt;, &lt;example&gt; blocks</span><br>
+                    <span class="comment">&lt;/thinking_framework&gt;</span><br><br>
+                    <span class="comment">&lt;framework_guide&gt;</span><br>
                     <span style="color: var(--accent-light);">[Full contents of prompts/frameworks/&lt;FRAMEWORK&gt;.md]</span><br>
-                    <span style="color: #6a737d;">Framework-specific patterns, API reference, verification checks</span><br><br>
-                    <span class="comment">=== PROJECT CONFIGURATION ===</span><br>
-                    <span style="color: #6a737d;">Language, version, framework, test command, app URL</span><br><br>
-                    <span class="comment">=== REQUIREMENTS ===</span><br>
-                    <span style="color: #6a737d;">Full contents of 01_requirements.md</span><br><br>
-                    <span class="comment">=== PREVIOUS PHASE OUTPUTS ===</span><br>
-                    <span style="color: #6a737d;">Cumulative context from all completed prior phases</span><br><br>
-                    <span class="comment">=== YOUR TASK ===</span><br>
-                    <span style="color: #6a737d;">Phase-specific instructions</span>
+                    <span style="color: #6a737d;">Framework-specific patterns, API reference, verification checks</span><br>
+                    <span class="comment">&lt;/framework_guide&gt;</span><br><br>
+                    <span class="comment">&lt;project_config&gt;</span><br>
+                    <span style="color: #6a737d;">Language, version, framework, test command, app URL</span><br>
+                    <span class="comment">&lt;/project_config&gt;</span><br><br>
+                    <span class="comment">&lt;requirements&gt;</span><br>
+                    <span style="color: #6a737d;">Full contents of 01_requirements.md</span><br>
+                    <span class="comment">&lt;/requirements&gt;</span><br><br>
+                    <span class="comment">&lt;consensus&gt;</span><br>
+                    <span style="color: #6a737d;">Multi-model synthesis (omitted if unavailable)</span><br>
+                    <span class="comment">&lt;/consensus&gt;</span><br><br>
+                    <span class="comment">&lt;previous_phases&gt;</span><br>
+                    <span style="color: #6a737d;">Cumulative context from all completed prior phases</span><br>
+                    <span class="comment">&lt;/previous_phases&gt;</span><br><br>
+                    <span class="comment">&lt;task&gt;</span><br>
+                    <span style="color: #6a737d;">Phase-specific instructions</span><br>
+                    <span class="comment">&lt;/task&gt;</span><br><br>
+                    <span class="comment">&lt;/motspilot_phase&gt;</span>
                 </div>
+                <p class="text-muted mt-3 mb-0" style="font-size: 0.85rem;"><strong>Why XML tags?</strong> Claude's prompt engineering best practices recommend XML tags over plain-text markers for unambiguous parsing of multi-section prompts. Each section is clearly delineated, reducing misinterpretation when mixing instructions, context, examples, and variable inputs.</p>
             </div>
         </div>
 

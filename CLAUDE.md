@@ -50,6 +50,17 @@ pending → in_progress → [auto-archived on completion]
                         in_progress (re-run phases for bug fixes)
 ```
 
+## Prompt Engineering Techniques
+
+All phase prompts use these patterns (derived from Claude and Gemini best practices):
+
+- **XML-tagged prompt assembly** — Orchestrator uses `<thinking_framework>`, `<requirements>`, `<consensus>`, `<previous_phases>`, `<task>` tags
+- **`<investigate_before_*>` guards** — Each phase has a phase-specific block preventing speculation about unread code
+- **`<anti_overengineering>` clauses** — Architecture and Development phases explicitly prevent scope creep
+- **`<self_check>` blocks** — Every phase ends with verification criteria before finalizing output
+- **`<example>` blocks** — Few-shot examples of good vs bad patterns where applicable
+- **Quote-grounded findings** — Verification must cite specific file:line and code before judging
+
 ## Core Philosophy
 
 - Start with the person using the feature, not the code

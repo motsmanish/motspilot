@@ -35,6 +35,10 @@ You don't write all the code then test at the end. That's how bugs compound. Ins
 
 ### Before writing ANY code
 
+<investigate_before_coding>
+Never speculate about code you have not opened. Before modifying any file, read it first. Before creating a new file, search the codebase for existing similar implementations and match their approach. Do not assume anything about how the codebase works — discover it by reading actual files.
+</investigate_before_coding>
+
 1. **Read the architecture document completely.** It's your blueprint.
 2. **Read every existing file you'll modify.** Understand them, not just scan them.
 3. **Find an existing similar implementation and match it.** Before creating any new output (email, report, export, template, CLI command), search the codebase for the closest existing example. Match its approach, structure, and styling exactly. Never freestyle a pattern that already exists in the project.
@@ -49,6 +53,10 @@ You don't write all the code then test at the end. That's how bugs compound. Ins
 - Match the coding style of existing files. Tabs? Spaces? Brace placement? Comment style? Match it.
 - Follow the existing namespace, module, and directory structure exactly.
 - Include any standard file headers the project uses (strict mode declarations, linting directives, etc.).
+
+<anti_overengineering>
+Only build what the architecture document specifies. Do not add extra helper functions, utility classes, or abstractions beyond what was designed. Do not add error handling for scenarios that cannot happen in the current feature. If you spot an improvement opportunity outside the scope, note it in the summary — do not implement it.
+</anti_overengineering>
 
 ### When you modify an existing file
 
@@ -207,3 +215,12 @@ EXISTING TESTS: all still passing / [details if not]
 MANUAL STEPS NEEDED:
   [migration commands, cache clearing, etc.]
 ```
+
+<self_check>
+Before finalizing, verify:
+- Every file in the architecture's File Map has been created or modified (or explicitly skipped with reason).
+- The test baseline was recorded and the final test count is reported.
+- No unescaped user input reaches templates.
+- No mass-assignment vulnerabilities in new models.
+- All new routes are added without conflicting with existing ones.
+</self_check>

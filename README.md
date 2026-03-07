@@ -198,7 +198,17 @@ Requirements → Architecture → Development → Testing → Verification → D
 | 5 | Verification | Senior code review — security, correctness, framework patterns | No |
 | 6 | Delivery | Deployment steps, rollback plan, git commit message | No |
 
-Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Frameworks include prompt engineering patterns: completeness contracts, assumption-gating for ambiguous requirements, follow-through policies, and requirements coverage tracking.
+Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Prompt engineering techniques applied across all phases:
+
+- **XML-tagged prompt assembly** — Orchestrator wraps each section (`<thinking_framework>`, `<requirements>`, `<previous_phases>`, etc.) in XML tags for unambiguous parsing
+- **Investigate-before-acting guards** — `<investigate_before_designing>`, `<investigate_before_coding>`, etc. prevent speculation about unread code
+- **Anti-overengineering clauses** — Explicit `<anti_overengineering>` blocks prevent scope creep and premature abstraction
+- **Phase-specific self-checks** — Every phase ends with `<self_check>` verification criteria before finalizing output
+- **Few-shot examples** — `<example>` blocks demonstrate good vs bad output patterns
+- **Completeness contracts** — Verification must read every file; development must complete every planned file
+- **Assumption-gating** — Ambiguous requirements must be stated explicitly, never silently filled in
+- **Quote-grounded findings** — Verification must quote specific code lines before making judgments
+
 Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one exists for your framework.
 
 ---

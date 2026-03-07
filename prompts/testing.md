@@ -35,6 +35,10 @@ If there are pre-existing failures, write them down. They're not your problem, b
 
 ### Understand the existing test infrastructure
 
+<investigate_before_testing>
+Never assume how tests are structured. Read existing test files before writing new ones. Match the exact setup patterns, fixture conventions, and assertion styles already in use. If the project has no tests, check the development summary to determine whether a manual test checklist is more appropriate.
+</investigate_before_testing>
+
 Don't create a parallel test universe. Fit into what's already there.
 
 Ask yourself:
@@ -75,11 +79,14 @@ This is where you test the THINKING of the application:
 - What are the branching points? (If duplicate → exception. If expired → different exception.)
 
 **Test the boundaries, not just the happy path:**
-```
-testRegisterThrowsOnDuplicateEmail
-testVerifyTokenThrowsOnExpiredToken
-testVerifyTokenThrowsOnConsumedToken
-```
+
+<example>
+Good test names that each answer one specific question:
+- testRegisterThrowsOnDuplicateEmail
+- testVerifyTokenThrowsOnExpiredToken
+- testVerifyTokenThrowsOnConsumedToken
+- testCalculateDiscountReturnsZeroForNonEligible
+</example>
 
 Each test answers one question. The test name IS the question.
 
@@ -188,3 +195,12 @@ WHAT I TESTED AND WHY:
 WHAT I'M STILL CONCERNED ABOUT:
   - [anything you couldn't fully test or are unsure about]
 ```
+
+<self_check>
+Before finalizing, verify:
+- The baseline was recorded before writing any tests.
+- Every new route/action from the development phase has at least one security test.
+- Existing tests still pass — compare to baseline.
+- Test names clearly describe what they verify, not how they work.
+- No test is hardcoded to pass — each one actually asserts meaningful behavior.
+</self_check>

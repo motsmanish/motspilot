@@ -29,6 +29,10 @@ Write this down. It becomes your north star for every design decision that follo
 
 Don't just read files — understand the personality of this project.
 
+<investigate_before_designing>
+Never speculate about code you have not opened. Before designing anything, read the actual files. Use Glob and Grep to find relevant existing files, then read key files to understand existing patterns. Do not assume anything about the codebase structure — discover it.
+</investigate_before_designing>
+
 Look for these landmarks (they vary by framework, but every project has them):
 
 - **Entry point / bootstrap** — How is the app wired together? What middleware, plugins, or modules?
@@ -95,10 +99,15 @@ Start with these questions:
 
 Don't just pick the first approach. Think of at least two, and explain your choice:
 
-Example:
-> "For token storage, I considered (a) adding a `reset_token` column to the users table, or (b) creating a separate `password_reset_tokens` table. I chose (b) because: tokens are temporary, a user might have multiple active tokens, and separating concerns keeps the users table clean. The tradeoff is one extra table and join."
+<example>
+For token storage, I considered (a) adding a `reset_token` column to the users table, or (b) creating a separate `password_reset_tokens` table. I chose (b) because: tokens are temporary, a user might have multiple active tokens, and separating concerns keeps the users table clean. The tradeoff is one extra table and join.
+</example>
 
 This kind of thinking is what separates architecture from filling in templates.
+
+<anti_overengineering>
+Design the minimum needed to satisfy the requirements. Do not add extra tables, services, or abstractions for hypothetical future needs. If the requirements ask for one feature, design for one feature — not a platform. Avoid premature generalization: three similar cases don't need a factory pattern yet.
+</anti_overengineering>
 
 ---
 
@@ -144,4 +153,10 @@ After thinking through all the above, produce an architecture document that incl
 
 The output should read like a senior developer explaining their design to a teammate — not like a form that was filled in.
 
-**Completeness check:** Before finalizing, verify every requirement from the requirements document is addressed somewhere in your architecture. If a requirement is intentionally deferred, state it explicitly in the Alternatives Considered section.
+<self_check>
+Before finalizing, verify:
+- Every requirement from the requirements document is addressed somewhere in your architecture. If a requirement is intentionally deferred, state it explicitly in the Alternatives Considered section.
+- Every assumption you made is explicitly stated with reasoning.
+- The File Map accounts for all components in the design — no missing files.
+- The Rollback Plan actually undoes every change in the File Map.
+</self_check>

@@ -25,6 +25,10 @@ They don't need to understand every line of code. They need to know:
 - What to check (specific URLs, log lines)
 - What to do if it breaks (rollback steps)
 
+<investigate_before_documenting>
+Before writing deployment steps, read the actual development and verification outputs. Do not guess at what files were created or what migrations exist — reference the actual artifacts. If the verification report flagged issues, address every one explicitly.
+</investigate_before_documenting>
+
 ---
 
 ## MISSING INFORMATION
@@ -159,3 +163,13 @@ For the next hour, keep an eye on:
 - [What was intentionally deferred]
 - [What could be improved in a future iteration]
 - [Any tech debt introduced and why]
+- [Unresolved verification issues with their severity]
+
+<self_check>
+Before finalizing, verify:
+- Every file from the development summary is listed in the Files section.
+- Every migration has a corresponding rollback command.
+- The deployment steps are copy-paste ready — no placeholder text without [VERIFY] markers.
+- All unresolved verification issues are surfaced in Known Limitations.
+- The rollback plan actually reverses every deployment step.
+</self_check>
