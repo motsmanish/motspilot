@@ -359,6 +359,8 @@ echo "Design a caching strategy" | php motspilot/bin/consensus.php --phase=gener
 
 **Fault tolerant:** If 1 or 2 APIs fail, the service proceeds with whatever responses are available. All 3 fail = error. If consensus fails entirely, the pipeline continues without it — it's an enhancement, not a requirement.
 
+**Dynamic timeouts:** API timeouts scale automatically based on prompt length (60s floor, +5s per 1K chars, 300s ceiling). Judge calls get 1.5x. No hardcoded limits — large requirements documents get proportionally more time. Human-readable error messages for timeouts, DNS failures, and connection issues.
+
 ---
 
 ## Core Philosophy
