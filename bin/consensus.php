@@ -30,9 +30,10 @@ declare(strict_types=1);
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
-const TIMEOUT_SECONDS  = 60;
-const CONNECT_TIMEOUT  = 15;
-const JUDGE_TIMEOUT    = 120;
+const CONNECT_TIMEOUT       = 15;
+const TIMEOUT_FLOOR         = 60;   // minimum seconds for any request
+const TIMEOUT_CEILING       = 300;  // maximum seconds (5 min)
+const TIMEOUT_PER_1K_CHARS  = 5;    // extra seconds per 1,000 chars of prompt
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,17 @@ function parse_args(array $argv): array {
 
 function save_file(string $path, string $content): void {
     file_put_contents($path, $content);
+}
+
+/** Calculate timeout based on prompt length — longer prompts get more time */
+function calculate_timeout(string $prompt, bool $isJudge = false): int {
+    $chars = mb_strlen($prompt);
+    $seconds = TIMEOUT_FLOOR + (int) ceil($chars / 1000 * TIMEOUT_PER_1K_CHARS);
+    // Judge calls process multiple responses, so give them 1.5x
+    if ($isJudge) {
+        $seconds = (int) ceil($seconds * 1.5);
+    }
+    return min($seconds, TIMEOUT_CEILING);
 }
 
 // ─── Provider definitions ───────────────────────────────────────────────────
@@ -149,7 +161,7 @@ function parse_gemini_response(string $raw): ?string {
 
 // ─── Fan-out ────────────────────────────────────────────────────────────────
 
-function fan_out(string $prompt, array $keys, ?string $logFile = null): array {
+function fan_out(string $prompt, array $keys, int $timeout, ?string $logFile = null): array {
     $providers = [
         'claude' => [
             'key_name' => 'ANTHROPIC_API_KEY',
@@ -190,7 +202,7 @@ function fan_out(string $prompt, array $keys, ?string $logFile = null): array {
             CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_POSTFIELDS     => $body,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => TIMEOUT_SECONDS,
+            CURLOPT_TIMEOUT        => $timeout,
             CURLOPT_CONNECTTIMEOUT => CONNECT_TIMEOUT,
         ]);
 
@@ -210,13 +222,21 @@ function fan_out(string $prompt, array $keys, ?string $logFile = null): array {
         $httpCode  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $rawBody   = curl_multi_getcontent($ch);
         $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
 
         curl_multi_remove_handle($mh, $ch);
         curl_close($ch);
 
         if ($curlError !== '') {
-            $failed[$name] = "cURL error: {$curlError}";
-            stderr("[$name] cURL error: {$curlError}", $logFile);
+            $reason = match ($curlErrno) {
+                CURLE_OPERATION_TIMEDOUT => "Timed out after {$timeout}s — prompt may be too large or API is slow",
+                CURLE_COULDNT_RESOLVE_HOST => "DNS resolution failed — check internet connection",
+                CURLE_COULDNT_CONNECT => "Connection refused — API may be down",
+                CURLE_SSL_CONNECT_ERROR => "SSL handshake failed",
+                default => "cURL error ({$curlErrno}): {$curlError}",
+            };
+            $failed[$name] = $reason;
+            stderr("[$name] {$reason}", $logFile);
             continue;
         }
 
@@ -247,7 +267,7 @@ function fan_out(string $prompt, array $keys, ?string $logFile = null): array {
 
 // ─── Claude judge call (shared helper) ──────────────────────────────────────
 
-function call_claude_judge(string $prompt, string $apiKey, string $model, ?string $logFile = null): ?string {
+function call_claude_judge(string $prompt, string $apiKey, string $model, int $timeout, ?string $logFile = null): ?string {
     if ($apiKey === '') {
         stderr('Cannot call judge - no ANTHROPIC_API_KEY', $logFile);
         return null;
@@ -267,7 +287,7 @@ function call_claude_judge(string $prompt, string $apiKey, string $model, ?strin
             'messages'   => [['role' => 'user', 'content' => $prompt]],
         ], JSON_THROW_ON_ERROR),
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => JUDGE_TIMEOUT,
+        CURLOPT_TIMEOUT        => $timeout,
         CURLOPT_CONNECTTIMEOUT => CONNECT_TIMEOUT,
     ]);
 
@@ -292,7 +312,7 @@ function call_claude_judge(string $prompt, string $apiKey, string $model, ?strin
 
 // ─── Synthesis ──────────────────────────────────────────────────────────────
 
-function synthesize(array $responses, string $originalPrompt, string $phaseName, string $judgeModel, string $anthropicKey, ?string $logFile = null): ?string {
+function synthesize(array $responses, string $originalPrompt, string $phaseName, string $judgeModel, string $anthropicKey, int $baseTimeout, ?string $logFile = null): ?string {
     $sections = build_response_sections($responses);
 
     $metaPrompt = <<<PROMPT
@@ -329,8 +349,9 @@ Every unique technical insight, recommendation, code example, and architectural 
 - Only include information that can be traced back to one or more of the responses — do not invent new recommendations.
 PROMPT;
 
-    stderr('Synthesizing via Claude judge...', $logFile);
-    $result = call_claude_judge($metaPrompt, $anthropicKey, $judgeModel, $logFile);
+    $judgeTimeout = calculate_timeout($metaPrompt, true);
+    stderr("Synthesizing via Claude judge (timeout: {$judgeTimeout}s)...", $logFile);
+    $result = call_claude_judge($metaPrompt, $anthropicKey, $judgeModel, $judgeTimeout, $logFile);
 
     if ($result !== null) {
         stderr(sprintf('Synthesis complete (%d chars)', mb_strlen($result)), $logFile);
@@ -341,7 +362,7 @@ PROMPT;
 
 // ─── Differences analysis ───────────────────────────────────────────────────
 
-function analyze_differences(array $responses, string $originalPrompt, string $judgeModel, string $anthropicKey, ?string $logFile = null): ?string {
+function analyze_differences(array $responses, string $originalPrompt, string $judgeModel, string $anthropicKey, int $baseTimeout, ?string $logFile = null): ?string {
     $succeeded = array_filter($responses, fn($r) => $r !== null);
     if (count($succeeded) < 2) {
         stderr('Need at least 2 responses to analyze differences.', $logFile);
@@ -399,8 +420,9 @@ For each point in each model's list, check whether ANY other model covered the s
 - Do not pad sections. If a model truly had no unique contributions, say so.
 PROMPT;
 
-    stderr('Analyzing unique contributions per AI...', $logFile);
-    $result = call_claude_judge($diffPrompt, $anthropicKey, $judgeModel, $logFile);
+    $judgeTimeout = calculate_timeout($diffPrompt, true);
+    stderr("Analyzing unique contributions per AI (timeout: {$judgeTimeout}s)...", $logFile);
+    $result = call_claude_judge($diffPrompt, $anthropicKey, $judgeModel, $judgeTimeout, $logFile);
 
     if ($result !== null) {
         stderr(sprintf('Differences analysis complete (%d chars)', mb_strlen($result)), $logFile);
@@ -486,13 +508,16 @@ function main(array $argv): int {
     $phase      = $opts['phase'];
     $judgeModel = $opts['judge-model'];
 
+    $fanoutTimeout = calculate_timeout($prompt);
+
     stderr("Phase: {$phase}", $logFile);
-    stderr(sprintf('Prompt: %s%s', mb_substr($prompt, 0, 120), mb_strlen($prompt) > 120 ? '...' : ''), $logFile);
+    stderr(sprintf('Prompt: %d chars, timeout: %ds', mb_strlen($prompt), $fanoutTimeout), $logFile);
+    stderr(sprintf('Preview: %s%s', mb_substr($prompt, 0, 120), mb_strlen($prompt) > 120 ? '...' : ''), $logFile);
     stderr('Querying 3 models in parallel...', $logFile);
 
     // ── Phase 1: Fan out to all 3 AIs ──────────────────────────────────────
 
-    [$responses, $failed] = fan_out($prompt, $keys, $logFile);
+    [$responses, $failed] = fan_out($prompt, $keys, $fanoutTimeout, $logFile);
 
     $succeeded = array_filter($responses, fn($r) => $r !== null);
     if (count($succeeded) === 0) {
@@ -535,6 +560,7 @@ function main(array $argv): int {
         $phase,
         $judgeModel,
         $keys['ANTHROPIC_API_KEY'] ?? '',
+        $fanoutTimeout,
         $logFile
     );
 
@@ -555,6 +581,7 @@ function main(array $argv): int {
         $prompt,
         $judgeModel,
         $keys['ANTHROPIC_API_KEY'] ?? '',
+        $fanoutTimeout,
         $logFile
     );
 
