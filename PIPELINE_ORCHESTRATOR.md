@@ -45,7 +45,7 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
 ### How to run it
 
 1. Build a consensus prompt from the requirements. Write it to a temporary file:
-   `<workspace>/tasks/<task-name>/consensus_prompt.txt`
+   `<workspace>/tasks/<task-name>/consensus/prompt.txt`
 
    The prompt should be:
    ```
@@ -72,37 +72,56 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
 2. Run the standalone consensus script via Bash:
    ```bash
    php motspilot/bin/consensus.php \
-     --prompt-file=<workspace>/tasks/<task-name>/consensus_prompt.txt \
+     --prompt-file=<workspace>/tasks/<task-name>/consensus/prompt.txt \
      --phase=pre-pipeline \
-     > <workspace>/tasks/<task-name>/00_consensus.md 2> <workspace>/tasks/<task-name>/consensus.log
+     --output-dir=<workspace>/tasks/<task-name>/consensus/
    ```
 
 3. Check the exit code:
-   - **Exit 0**: Success. Read `00_consensus.md` — this is the synthesized multi-model output.
-   - **Exit 1**: All APIs failed. Log a warning, show the user `consensus.log`, and continue without consensus (the pipeline still works, just without the multi-model head start).
-   - **Exit 2**: Bad config (missing .env or prompt). Show the error from `consensus.log` and ask the user to fix it, or continue without consensus.
+   - **Exit 0**: Success. The `consensus/` folder now contains all outputs.
+   - **Exit 1**: All APIs failed. Log a warning, show the user `consensus/consensus.log`, and continue without consensus (the pipeline still works, just without the multi-model head start).
+   - **Exit 2**: Bad config (missing .env or prompt). Show the error from `consensus/consensus.log` and ask the user to fix it, or continue without consensus.
 
 4. Log status to the user:
    ```
    Multi-Model Consensus: [OK — 3/3 models responded | PARTIAL — 2/3 models responded | SKIPPED — see consensus.log]
-   Consensus output saved to: <workspace>/tasks/<task-name>/00_consensus.md
+   Consensus files saved to: <workspace>/tasks/<task-name>/consensus/
+     01_claude.md      — Claude raw response
+     02_gpt4o.md       — GPT-4o raw response
+     03_gemini.md      — Gemini raw response
+     04_synthesis.md   — Unified synthesis (all 3 merged)
+     05_differences.md — Unique contributions per AI
+     consensus.log     — Execution log
    ```
+
+### Consensus output files explained
+
+| File | Purpose |
+|------|---------|
+| `01_claude.md` | Full raw response from Claude |
+| `02_gpt4o.md` | Full raw response from GPT-4o |
+| `03_gemini.md` | Full raw response from Gemini |
+| `04_synthesis.md` | Judge-synthesized unified output (best of all 3 merged into one) |
+| `05_differences.md` | **Unique contributions only** — what each AI pointed out that the others missed. Ignores common points. Highlights conflicts. |
+| `consensus.log` | Timestamped execution log |
 
 ### How consensus output is used
 
-When consensus output exists (`00_consensus.md` is non-empty), include it as **additional context** in every subagent prompt. Add this section after `=== REQUIREMENTS ===` and before `=== PREVIOUS PHASE OUTPUTS ===`:
+When `04_synthesis.md` exists and is non-empty, include it as **additional context** in every subagent prompt. Add this section after `=== REQUIREMENTS ===` and before `=== PREVIOUS PHASE OUTPUTS ===`:
 
 ```
 === MULTI-MODEL CONSENSUS (Pre-Pipeline Analysis) ===
-[Full contents of tasks/<task-name>/00_consensus.md]
+[Full contents of tasks/<task-name>/consensus/04_synthesis.md]
 
 Note: This consensus was synthesized from Claude, GPT-4o, and Gemini analyzing the
 requirements independently. Use it as a strong starting point but apply your own
 judgment — the phase-specific thinking framework takes priority over consensus
 recommendations.
+
+For unique insights each AI contributed, see: consensus/05_differences.md
 ```
 
-If `00_consensus.md` does not exist or is empty, simply omit this section — the pipeline runs normally without it.
+If the consensus folder does not exist or `04_synthesis.md` is empty, simply omit this section — the pipeline runs normally without it.
 
 ---
 
@@ -144,7 +163,7 @@ App URL: [APP_URL from config]
 [Full contents of tasks/<task-name>/01_requirements.md]
 
 === MULTI-MODEL CONSENSUS (Pre-Pipeline Analysis) ===
-[Full contents of tasks/<task-name>/00_consensus.md — or omit this section if file is missing/empty]
+[Full contents of tasks/<task-name>/consensus/04_synthesis.md — or omit this section if file is missing/empty]
 
 === PREVIOUS PHASE OUTPUTS ===
 [For each completed previous phase, full contents labeled by phase name]
