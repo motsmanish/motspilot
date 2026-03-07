@@ -184,15 +184,6 @@
             color: #a5d6ff;
             font-family: monospace;
         }
-        .file-tree {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-size: 0.82rem;
-            line-height: 1.8;
-            color: var(--text-muted);
-        }
-        .file-tree .folder { color: #79c0ff; }
-        .file-tree .file { color: #c9d1d9; }
-        .file-tree .desc { color: #6a737d; }
         .thinking-section {
             border-left: 3px solid var(--border);
             padding-left: 1.25rem;
@@ -260,11 +251,171 @@
             background: transparent;
             border-color: var(--border);
         }
+        /* Comparison section */
+        .comparison-section {
+            background: linear-gradient(180deg, #0f1117 0%, #131620 100%);
+            padding: 4rem 0;
+        }
+        .comparison-section h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .comparison-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            height: 100%;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .comparison-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .comparison-card.before {
+            border-top: 3px solid #f85149;
+        }
+        .comparison-card.after {
+            border-top: 3px solid #3fb950;
+        }
+        .comparison-card .card-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .comparison-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .comparison-card ul li {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(51,57,66,0.5);
+            font-size: 0.9rem;
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+        }
+        .comparison-card ul li:last-child {
+            border-bottom: none;
+        }
+        .comparison-card ul li i {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .vs-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--surface-3);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Stats section */
+        .stats-section {
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem 1rem;
+        }
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-light), #79c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Personas section */
+        .personas-section {
+            background: linear-gradient(180deg, #131620 0%, #0f1117 100%);
+            padding: 4rem 0;
+        }
+        .personas-section h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .persona-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            height: 100%;
+            transition: transform 0.15s, border-color 0.2s;
+        }
+        .persona-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+        .persona-card .persona-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .persona-card h6 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .persona-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+        .persona-card .persona-tags {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .persona-card .persona-tags span {
+            font-size: 0.72rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            background: var(--surface-3);
+            color: var(--text-muted);
+        }
+
+        /* FAQ section */
+        .faq-section {
+            padding: 4rem 0;
+        }
+        .faq-section h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 1.8rem; }
             .nav-pills { flex-wrap: nowrap; overflow-x: auto; }
             .pipeline-flow .arrow { display: none; }
             .pipeline-flow .stage { margin-bottom: 0.25rem; }
+            .comparison-section h2, .personas-section h2, .faq-section h2 { font-size: 1.5rem; }
+            .stat-card .stat-number { font-size: 1.8rem; }
+            .vs-divider { padding: 1rem 0; }
         }
     </style>
 </head>
@@ -293,6 +444,119 @@
             <span class="badge badge-pill px-3 py-2">Security-First</span>
             <span class="badge badge-pill px-3 py-2">Human-in-the-Loop</span>
             <span class="badge badge-pill px-3 py-2">Checkpoint & Resume</span>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">AI Models in Consensus</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Pipeline Phases</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">Prompt Engineering Techniques</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Lines Written Before Reading</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Before / After Comparison -->
+<section class="comparison-section">
+    <div class="container">
+        <h2 class="text-center mb-2">What Changes When You Add Structure</h2>
+        <p class="text-center text-muted mb-5" style="max-width: 600px; margin: 0 auto;">Most AI coding tools generate first and fix later. motspilot flips that &mdash; it understands your codebase before touching a single file.</p>
+
+        <div class="row g-4 align-items-stretch">
+            <!-- Before -->
+            <div class="col-md-5">
+                <div class="comparison-card before">
+                    <div class="card-label" style="color: #f85149;">Typical AI-assisted workflow</div>
+                    <ul>
+                        <li>
+                            <i class="bi bi-x-circle" style="color: #f85149;"></i>
+                            <span>Prompt an AI, paste output, hope it works in your codebase</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle" style="color: #f85149;"></i>
+                            <span>One model's blind spots become your blind spots</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle" style="color: #f85149;"></i>
+                            <span>No architecture phase &mdash; straight to code that doesn't fit existing patterns</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle" style="color: #f85149;"></i>
+                            <span>Security testing is an afterthought (if it happens at all)</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle" style="color: #f85149;"></i>
+                            <span>No verification &mdash; the developer who wrote it also reviews it</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle" style="color: #f85149;"></i>
+                            <span>Context lost between sessions &mdash; start over each time</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VS -->
+            <div class="col-md-2 vs-divider">
+                <div class="vs-badge">VS</div>
+            </div>
+
+            <!-- After -->
+            <div class="col-md-5">
+                <div class="comparison-card after">
+                    <div class="card-label" style="color: #3fb950;">With motspilot</div>
+                    <ul>
+                        <li>
+                            <i class="bi bi-check-circle" style="color: #3fb950;"></i>
+                            <span>AI reads your codebase first, then designs changes that fit naturally</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle" style="color: #3fb950;"></i>
+                            <span>Three models cross-check each other &mdash; consensus catches what one model misses</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle" style="color: #3fb950;"></i>
+                            <span>Dedicated architecture phase maps blast radius before any code is written</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle" style="color: #3fb950;"></i>
+                            <span>Security tested first &mdash; auth bypass, CSRF, IDOR checked before happy paths</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle" style="color: #3fb950;"></i>
+                            <span>Independent verification phase reads actual code and quotes findings line-by-line</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle" style="color: #3fb950;"></i>
+                            <span>Artifacts persist on disk &mdash; checkpoint and resume across sessions</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -448,36 +712,6 @@
                 </div>
             </div>
 
-            <!-- File Structure -->
-            <h4 class="mb-3">File Structure</h4>
-            <div class="card p-4">
-                <div class="file-tree">
-                    <span class="folder">project root/</span><br>
-                    &nbsp;&nbsp;<span class="file">motspilot.sh</span> <span class="desc">&mdash; Shell utility (filing system)</span><br>
-                    &nbsp;&nbsp;<span class="file">PIPELINE_ORCHESTRATOR.md</span> <span class="desc">&mdash; Claude Code orchestration instructions</span><br>
-                    &nbsp;&nbsp;<span class="file">README.md</span> <span class="desc">&mdash; User documentation</span><br>
-                    &nbsp;&nbsp;<span class="file">CLAUDE.md</span> <span class="desc">&mdash; Quick reference for Claude Code</span><br>
-                    &nbsp;&nbsp;<span class="file">.env</span> <span class="desc">&mdash; API keys for multi-model consensus (ANTHROPIC, OPENAI, GEMINI)</span><br>
-                    &nbsp;&nbsp;<span class="folder">bin/</span> <span class="desc">&mdash; Standalone scripts</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">consensus.php</span> <span class="desc">&mdash; Multi-model consensus (PHP 8+, no framework deps)</span><br>
-                    &nbsp;&nbsp;<span class="folder">prompts/</span> <span class="desc">&mdash; Thinking frameworks (one per phase)</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">architecture.md</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">development.md</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">testing.md</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">verification.md</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">delivery.md</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">frameworks/</span> <span class="desc">&mdash; Framework-specific guides</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">cakephp.md</span> <span class="desc">&mdash; CakePHP 4.x guide</span><br>
-                    &nbsp;&nbsp;<span class="folder">.motspilot/</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">config</span> <span class="desc">&mdash; Project settings</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">current_task</span> <span class="desc">&mdash; Active task name</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">workspace/</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">tasks/&lt;name&gt;/</span> <span class="desc">&mdash; Active task artifacts</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">consensus/</span> <span class="desc">&mdash; Multi-model AI responses + synthesis + differences</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">archive/&lt;name&gt;/</span> <span class="desc">&mdash; Completed task artifacts</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">logs/</span>
-                </div>
-            </div>
         </div>
 
         <!-- ============ WORKFLOW ============ -->
@@ -1312,6 +1546,160 @@
 
     </div><!-- /tab-content -->
 </div><!-- /container -->
+
+<!-- Who It's For -->
+<section class="personas-section">
+    <div class="container">
+        <h2 class="text-center mb-2">Built For Developers Who Ship Into Production</h2>
+        <p class="text-center text-muted mb-5" style="max-width: 580px; margin: 0 auto;">motspilot isn't for greenfield prototypes. It's for adding features to real applications where things can break.</p>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="persona-card">
+                    <div class="persona-icon">&#128736;</div>
+                    <h6>Solo Developer</h6>
+                    <p>You maintain a production app alone. The pipeline gives you a second pair of eyes &mdash; architecture review, security testing, and verification you'd otherwise skip.</p>
+                    <div class="persona-tags">
+                        <span>Side projects</span>
+                        <span>Freelance</span>
+                        <span>Startups</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="persona-card">
+                    <div class="persona-icon">&#128101;</div>
+                    <h6>Small Team Lead</h6>
+                    <p>Your team uses AI for coding but quality is inconsistent. motspilot standardizes the process &mdash; same phases, same security checks, every time.</p>
+                    <div class="persona-tags">
+                        <span>Consistency</span>
+                        <span>Code review</span>
+                        <span>Standards</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="persona-card">
+                    <div class="persona-icon">&#128274;</div>
+                    <h6>Security-Conscious Dev</h6>
+                    <p>You've seen AI-generated code ship with auth bypasses and SQL injection. motspilot tests security before the happy path &mdash; by design, not afterthought.</p>
+                    <div class="persona-tags">
+                        <span>OWASP</span>
+                        <span>Auth testing</span>
+                        <span>CSRF/IDOR</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="persona-card">
+                    <div class="persona-icon">&#128218;</div>
+                    <h6>Legacy Codebase Owner</h6>
+                    <p>Your app has years of conventions baked in. motspilot explores first, matches your patterns, and integrates &mdash; no random refactors or style conflicts.</p>
+                    <div class="persona-tags">
+                        <span>Existing patterns</span>
+                        <span>Migration safety</span>
+                        <span>Rollback</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+    <div class="container" style="max-width: 800px;">
+        <h2 class="text-center mb-2">Frequently Asked Questions</h2>
+        <p class="text-center text-muted mb-5">Common questions about how motspilot works and what it expects.</p>
+
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        Does motspilot work with any programming language?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        Yes. The pipeline is framework-agnostic &mdash; it works with PHP, Python, TypeScript, Ruby, Go, or anything else. You set your <code>LANGUAGE</code> and <code>FRAMEWORK</code> in the config, and the pipeline adapts. Framework-specific guides (like the included CakePHP guide) add deeper knowledge, but the pipeline runs without them.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        What does "multi-model consensus" actually do?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        Before the pipeline starts, your requirements are sent to Claude, GPT-4o, and Gemini in parallel. A synthesis pass merges their responses, highlights where they agree, and surfaces unique insights each model contributed. This reduces single-model blind spots and gives the pipeline a stronger starting context.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        Do I need API keys for all three models?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        No. The consensus script is fault-tolerant &mdash; it works with one, two, or three models. If a key is missing or a model times out, the pipeline continues with whatever responses it gets. You need at least one API key (Anthropic is used by Claude Code anyway).
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                        Can I skip phases or run only part of the pipeline?
+                    </button>
+                </h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        Yes. Use <code>--from=&lt;phase&gt;</code> to start from any phase. If you've already done architecture and just need to re-run development after a bug fix, use <code>./motspilot.sh go --task=name --from=development</code>. Previous phase artifacts are preserved and fed as context.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                        What happens if I close my terminal mid-pipeline?
+                    </button>
+                </h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        Nothing is lost. Every approved phase writes a checkpoint to disk. When you come back, the pipeline knows which phases are done and resumes from where you left off. Artifacts serve as the persistent context bridge between sessions.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                        Is motspilot a VS Code extension or a standalone tool?
+                    </button>
+                </h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        Neither. motspilot lives inside your project as a directory. You interact with it through Claude Code's CLI. The shell script (<code>motspilot.sh</code>) manages files and state; Claude Code is the AI engine that runs the phases. No IDE plugins, no SaaS dependency.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                        How is this different from just asking Claude to build a feature?
+                    </button>
+                </h2>
+                <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        When you ask Claude directly, it generates code based on your prompt alone. motspilot adds structure: three models cross-check your requirements, an architecture phase maps impact before coding starts, security gets tested before happy paths, an independent verifier reads the actual code, and everything is checkpointed. It's the difference between a sketch and a blueprint.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Footer -->
 <footer class="border-top py-4 mt-5" style="border-color: var(--border) !important;">
