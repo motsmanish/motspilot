@@ -42,13 +42,30 @@ fi
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
-MOTSPILOT_DIR="$(cd "$(dirname "$0")" && pwd)"
-LOG_DIR="${MOTSPILOT_DIR}/.motspilot/logs"
-CONFIG_FILE="${MOTSPILOT_DIR}/.motspilot/config"
-CURRENT_TASK_FILE="${MOTSPILOT_DIR}/.motspilot/current_task"
+# MOTSPILOT_DIR: where the tool itself lives (prompts, scripts)
+# Resolve the real path even through symlinks
+MOTSPILOT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+
+# PROJECT_DIR: the project that is using motspilot
+# When invoked via symlink (e.g. project/motspilot -> /path/to/motspilot),
+# PROJECT_DIR is the parent of the symlink. When invoked directly, it falls
+# back to MOTSPILOT_DIR's parent (original behavior).
+if [[ -L "$0" ]] || [[ "$(cd "$(dirname "$0")" && pwd)" != "$MOTSPILOT_DIR" ]]; then
+    # Invoked via symlink — project is the symlink's parent directory
+    PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+else
+    # Invoked directly — project is motspilot's parent (original behavior)
+    PROJECT_DIR="$(cd "${MOTSPILOT_DIR}/.." && pwd)"
+fi
+
+# State lives in the PROJECT, not in the tool directory
+STATE_DIR="${PROJECT_DIR}/.motspilot"
+LOG_DIR="${STATE_DIR}/logs"
+CONFIG_FILE="${STATE_DIR}/config"
+CURRENT_TASK_FILE="${STATE_DIR}/current_task"
 
 # Workspace paths (defaults — may be overridden by WORKSPACE_DIR in config)
-WORK_DIR="${MOTSPILOT_DIR}/.motspilot/workspace"
+WORK_DIR="${STATE_DIR}/workspace"
 TASKS_DIR="${WORK_DIR}/tasks"
 ARCHIVE_DIR="${WORK_DIR}/archive"
 
@@ -127,11 +144,9 @@ BANNER
 # ─── Workspace resolution ─────────────────────────────────────────────────────
 
 resolve_workspace() {
-    # If WORKSPACE_DIR is set in config, use it (relative to PROJECT_ROOT)
+    # If WORKSPACE_DIR is set in config, use it (relative to PROJECT_DIR)
     if [[ -n "${WORKSPACE_DIR:-}" ]]; then
-        local project_root
-        project_root="$(cd "${MOTSPILOT_DIR}/${PROJECT_ROOT:-..}" && pwd)"
-        WORK_DIR="${project_root}/${WORKSPACE_DIR}"
+        WORK_DIR="${PROJECT_DIR}/${WORKSPACE_DIR}"
         TASKS_DIR="${WORK_DIR}/tasks"
         ARCHIVE_DIR="${WORK_DIR}/archive"
     fi
@@ -150,9 +165,10 @@ ensure_config() {
 #
 # Edit these values for your project.
 # This file is sourced by motspilot.sh.
-
-# Path to your project root (absolute or relative to motspilot/)
-PROJECT_ROOT=".."
+#
+# Project root is auto-detected:
+#   - Via symlink: parent directory of the symlink
+#   - Direct invocation: parent directory of motspilot/
 
 # Language: php, python, javascript, typescript, go, ruby, java, etc.
 LANGUAGE=""
@@ -181,8 +197,8 @@ TEST_CMD=""
 # Deploy command (used in delivery phase)
 DEPLOY_CMD="echo 'Deploy not configured — edit .motspilot/config'"
 
-# Workspace directory (optional — store task artifacts in the project repo instead of motspilot/)
-# Path is relative to PROJECT_ROOT. When set, tasks/ and archive/ live here instead of .motspilot/workspace/
+# Workspace directory (optional — store task artifacts in the project repo instead of .motspilot/)
+# Path is relative to project root. When set, tasks/ and archive/ live here.
 # This allows task data to be committed to the project's git repository.
 # Example: WORKSPACE_DIR="motspilot-data"
 WORKSPACE_DIR=""
@@ -486,7 +502,7 @@ write_workorder() {
     if [[ -n "${WORKSPACE_DIR:-}" ]]; then
         workspace_rel="${WORKSPACE_DIR}"
     else
-        workspace_rel="motspilot/.motspilot/workspace"
+        workspace_rel=".motspilot/workspace"
     fi
 
     cat >"${tdir}/pipeline_workorder.md" <<EOF
@@ -497,7 +513,7 @@ write_workorder() {
 **Status**: READY
 **Created**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 **Start from phase**: ${from_phase}
-**Project root**: ${PROJECT_ROOT:-".."}
+**Project root**: ${PROJECT_DIR}
 **Language**: ${LANGUAGE:-"(not set)"}
 **Language version**: ${LANGUAGE_VERSION:-"(not set)"}
 **Framework**: ${FRAMEWORK:-"(not set)"}
