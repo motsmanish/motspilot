@@ -16,6 +16,24 @@
 #   ./motspilot.sh reactivate <name>                         # Restore from archive
 #   ./motspilot.sh reset --task=<name>                       # Reset phase artifacts
 #   ./motspilot.sh view <phase> [--task=<name>]              # View an artifact
+#
+# Setup (any of these work):
+#   Option A: Symlink the directory into your project:
+#     ln -s /path/to/motspilot myproject/motspilot
+#     cd myproject && ./motspilot/motspilot.sh init
+#
+#   Option B: Symlink just the script:
+#     ln -s /path/to/motspilot/motspilot.sh myproject/motspilot.sh
+#     cd myproject && ./motspilot.sh init
+#
+#   Option C: Run directly from any project directory:
+#     cd myproject && bash /path/to/motspilot/motspilot.sh init
+#
+#   Option D: Explicit project path:
+#     /path/to/motspilot/motspilot.sh --project=/path/to/myproject init
+#
+# Project detection: looks for .motspilot/config walking up from CWD,
+# then falls back to CWD itself. Use --project= to override.
 ###############################################################################
 
 set -euo pipefail
@@ -47,15 +65,66 @@ fi
 MOTSPILOT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 
 # PROJECT_DIR: the project that is using motspilot
-# When invoked via symlink (e.g. project/motspilot -> /path/to/motspilot),
-# PROJECT_DIR is the parent of the symlink. When invoked directly, it falls
-# back to MOTSPILOT_DIR's parent (original behavior).
-if [[ -L "$0" ]] || [[ "$(cd "$(dirname "$0")" && pwd)" != "$MOTSPILOT_DIR" ]]; then
-    # Invoked via symlink — project is the symlink's parent directory
-    PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+#
+# Resolution order:
+#   1. --project=<path> flag (explicit override)
+#   2. Symlink detection (project/motspilot/ or project/bin/motspilot.sh)
+#   3. Walk up from CWD looking for .motspilot/config
+#   4. CWD itself (if .motspilot/config exists or will be created by init)
+#   5. Fallback: MOTSPILOT_DIR parent (legacy behavior)
+
+# Check for --project= flag in args
+_EXPLICIT_PROJECT=""
+for _arg in "$@"; do
+    case "$_arg" in
+        --project=*) _EXPLICIT_PROJECT="${_arg#--project=}" ;;
+    esac
+done
+
+# Helper: walk up from a directory looking for .motspilot/config
+find_project_root() {
+    local dir="$1"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -f "${dir}/.motspilot/config" ]]; then
+            echo "$dir"
+            return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+    return 1
+}
+
+if [[ -n "$_EXPLICIT_PROJECT" ]]; then
+    # 1. Explicit --project= flag
+    PROJECT_DIR="$(cd "$_EXPLICIT_PROJECT" && pwd)"
+elif [[ -L "$0" ]] || [[ "$(cd "$(dirname "$0")" && pwd)" != "$MOTSPILOT_DIR" ]]; then
+    # 2. Invoked via symlink — project is where the symlink lives
+    #    Supports: project/motspilot/motspilot.sh (symlinked dir)
+    #              project/bin/motspilot.sh (symlinked file in subdir)
+    #              project/motspilot.sh (symlinked file at root)
+    SYMLINK_DIR="$(cd "$(dirname "$0")" && pwd)"
+    if [[ -f "${SYMLINK_DIR}/.motspilot/config" ]]; then
+        # Symlink is at project root (e.g. project/motspilot.sh)
+        PROJECT_DIR="$SYMLINK_DIR"
+    elif [[ -f "${SYMLINK_DIR}/../.motspilot/config" ]]; then
+        # Symlink is in a subdirectory (e.g. project/motspilot/motspilot.sh)
+        PROJECT_DIR="$(cd "${SYMLINK_DIR}/.." && pwd)"
+    else
+        # No config found — walk up from symlink location
+        PROJECT_DIR="$(find_project_root "$SYMLINK_DIR" || echo "$SYMLINK_DIR")"
+    fi
 else
-    # Invoked directly — project is motspilot's parent (original behavior)
-    PROJECT_DIR="$(cd "${MOTSPILOT_DIR}/.." && pwd)"
+    # 3. Invoked directly (not via symlink)
+    #    Prefer CWD if it has .motspilot/config, otherwise walk up from CWD
+    if PROJECT_DIR="$(find_project_root "$(pwd)")"; then
+        : # found it
+    elif [[ "$(pwd)" != "$MOTSPILOT_DIR" ]] && [[ "$(pwd)" != "$(dirname "$MOTSPILOT_DIR")" ]]; then
+        # CWD looks like a project directory — use it (init will create config)
+        PROJECT_DIR="$(pwd)"
+    else
+        # Fallback: motspilot's parent (legacy behavior for co-located setups)
+        PROJECT_DIR="$(cd "${MOTSPILOT_DIR}/.." && pwd)"
+    fi
 fi
 
 # State lives in the PROJECT, not in the tool directory
@@ -811,6 +880,13 @@ view_artifact() {
 main() {
     show_banner
 
+    # Strip --project= from args (already consumed during path resolution)
+    local filtered_args=()
+    for _a in "$@"; do
+        [[ "$_a" != --project=* ]] && filtered_args+=("$_a")
+    done
+    set -- "${filtered_args[@]}"
+
     local command="${1:-help}"
     shift || true
 
@@ -1042,8 +1118,23 @@ main() {
             echo -e "    ${CYAN}./motspilot.sh reset --task=<name>${NC}                 Reset phase artifacts (keeps requirements)"
             echo -e "    ${CYAN}./motspilot.sh view <phase> [--task=<name>]${NC}        View a phase artifact"
             echo ""
+            echo -e "  ${BOLD}Global flag:${NC}  ${CYAN}--project=<path>${NC}  Override project directory detection"
+            echo ""
             echo -e "  ${BOLD}Phases:${NC}  architecture · development · testing · verification · delivery"
             echo -e "  ${BOLD}View shortcuts:${NC}  req · arch · dev · test · verify · wo (workorder)"
+            echo ""
+            echo -e "  ${BOLD}Setup:${NC}"
+            echo ""
+            echo -e "    ${DIM}# Option A: Symlink the directory${NC}"
+            echo -e "    ln -s /path/to/motspilot myproject/motspilot"
+            echo -e "    cd myproject && ./motspilot/motspilot.sh init"
+            echo ""
+            echo -e "    ${DIM}# Option B: Symlink just the script${NC}"
+            echo -e "    ln -s /path/to/motspilot/motspilot.sh myproject/motspilot.sh"
+            echo -e "    cd myproject && ./motspilot.sh init"
+            echo ""
+            echo -e "    ${DIM}# Option C: Run directly from project dir${NC}"
+            echo -e "    cd myproject && bash /path/to/motspilot/motspilot.sh init"
             echo ""
             echo -e "  ${BOLD}Workflow:${NC}"
             echo ""
