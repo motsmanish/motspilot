@@ -875,6 +875,161 @@ view_artifact() {
     fi
 }
 
+# ─── Interactive task picker ──────────────────────────────────────────────
+
+# Determine the current phase stage for a task directory
+get_phase_stage() {
+    local tdir="$1"
+    local last_done=""
+    local next_pending=""
+
+    for phase in "${ALL_PHASES[@]}"; do
+        local artifact="${tdir}/${PHASE_NUM[$phase]}_${phase}.md"
+        if [[ -f "$artifact" ]] && [[ -s "$artifact" ]]; then
+            last_done="$phase"
+        elif [[ -z "$next_pending" ]]; then
+            next_pending="$phase"
+        fi
+    done
+
+    if [[ -z "$last_done" ]] && [[ -n "$next_pending" ]]; then
+        echo "${next_pending}"
+    elif [[ -n "$next_pending" ]]; then
+        echo "${next_pending}"
+    elif [[ -n "$last_done" ]]; then
+        echo "done"
+    else
+        echo "—"
+    fi
+}
+
+# Build a compact phase progress string: [✓✓✓○○○]
+get_phase_bar() {
+    local tdir="$1"
+    local bar="["
+    for phase in "${ALL_PHASES[@]}"; do
+        local artifact="${tdir}/${PHASE_NUM[$phase]}_${phase}.md"
+        if [[ -f "$artifact" ]] && [[ -s "$artifact" ]]; then
+            bar+="${GREEN}✓${NC}"
+        else
+            bar+="${DIM}○${NC}"
+        fi
+    done
+    bar+="]"
+    echo -e "$bar"
+}
+
+# Get last-modified timestamp of the most recently changed file in a task dir
+get_last_modified() {
+    local tdir="$1"
+    local epoch=""
+    epoch=$(find "$tdir" -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -rn | head -1 | cut -d. -f1)
+    if [[ -n "$epoch" ]]; then
+        date -d "@${epoch}" '+%Y-%m-%d %H:%M' 2>/dev/null || echo "—"
+    else
+        echo "—"
+    fi
+}
+
+pick_task() {
+    local source="${1:-active}"  # "active", "archived", or "all"
+    local tasks=()
+    local task_dirs=()
+
+    # Collect active tasks
+    if [[ "$source" != "archived" ]] && [[ -d "$TASKS_DIR" ]]; then
+        while IFS= read -r -d '' tdir; do
+            [[ -f "${tdir}/meta" ]] || continue
+            tasks+=("$(basename "$tdir")")
+            task_dirs+=("$tdir")
+        done < <(find "$TASKS_DIR" -maxdepth 1 -mindepth 1 -type d -print0 2>/dev/null | sort -z)
+    fi
+
+    # Collect archived tasks
+    if [[ "$source" == "archived" || "$source" == "all" ]] && [[ -d "$ARCHIVE_DIR" ]]; then
+        while IFS= read -r -d '' adir; do
+            [[ -f "${adir}/meta" ]] || continue
+            tasks+=("$(basename "$adir")")
+            task_dirs+=("$adir")
+        done < <(find "$ARCHIVE_DIR" -maxdepth 1 -mindepth 1 -type d -print0 2>/dev/null | sort -z)
+    fi
+
+    if [[ ${#tasks[@]} -eq 0 ]]; then
+        log WARN "No tasks found."
+        log INFO "Create one: ${CYAN}./motspilot.sh go --task=my-feature \"description\"${NC}"
+        return 1
+    fi
+
+    local current
+    current=$(get_current_task)
+
+    echo ""
+    echo -e "  ${BOLD}Select a task:${NC}"
+    echo ""
+
+    # Table header
+    printf "  ${DIM}───┬──────────────────────────┬────────────┬──────────────┬────────────┬──────────────────${NC}\n"
+    printf "  ${BOLD} #  │ Task                     │ Status     │ Stage        │ Progress   │ Last Modified    ${NC}\n"
+    printf "  ${DIM}───┼──────────────────────────┼────────────┼──────────────┼────────────┼──────────────────${NC}\n"
+
+    local i=1
+    for idx in "${!tasks[@]}"; do
+        local name="${tasks[$idx]}"
+        local tdir="${task_dirs[$idx]}"
+        local meta_file="${tdir}/meta"
+
+        local status description created
+        status=$(grep -i "^STATUS=" "$meta_file" | head -1 | cut -d= -f2- || echo "")
+        description=$(grep -i "^DESCRIPTION=" "$meta_file" | head -1 | cut -d= -f2- || echo "")
+        created=$(grep -i "^CREATED=" "$meta_file" | head -1 | cut -d= -f2- | cut -c1-10 || echo "—")
+
+        # Phase stage
+        local stage
+        stage=$(get_phase_stage "$tdir")
+
+        # Phase progress bar
+        local bar
+        bar=$(get_phase_bar "$tdir")
+
+        # Last modified
+        local modified
+        modified=$(get_last_modified "$tdir")
+
+        # Status color
+        local status_color="$DIM"
+        [[ "$status" == "in_progress" ]] && status_color="$YELLOW"
+        [[ "$status" == "pending" ]] && status_color="$BLUE"
+        [[ "$status" == "completed" ]] && status_color="$GREEN"
+
+        # Stage color
+        local stage_color="$DIM"
+        [[ "$stage" != "done" ]] && [[ "$stage" != "—" ]] && stage_color="$CYAN"
+        [[ "$stage" == "done" ]] && stage_color="$GREEN"
+
+        # Current task marker
+        local marker=" "
+        [[ "$name" == "$current" ]] && marker="${CYAN}▶${NC}"
+
+        printf "  %b${BOLD}%2d${NC} │ %-24s │ ${status_color}%-10s${NC} │ ${stage_color}%-12s${NC} │ %b │ ${DIM}%-16s${NC}\n" \
+            "$marker" "$i" "$name" "$status" "$stage" "$bar" "$modified"
+        i=$((i + 1))
+    done
+
+    printf "  ${DIM}───┴──────────────────────────┴────────────┴──────────────┴────────────┴──────────────────${NC}\n"
+    echo ""
+
+    read -rp "  Enter number (1-${#tasks[@]}): " choice
+
+    # Validate input
+    if [[ ! "$choice" =~ ^[0-9]+$ ]] || [[ "$choice" -lt 1 ]] || [[ "$choice" -gt ${#tasks[@]} ]]; then
+        log ERROR "Invalid selection."
+        return 1
+    fi
+
+    PICKED_TASK="${tasks[$((choice - 1))]}"
+    return 0
+}
+
 # ─── CLI ─────────────────────────────────────────────────────────────────────
 
 main() {
@@ -945,7 +1100,19 @@ main() {
                     task_name=$(slugify "$inline_desc")
                     log INFO "Auto-named task: ${task_name}"
                 else
-                    task_name=$(resolve_task "" "go") || exit 1
+                    # Try current task first, then offer picker
+                    local current
+                    current=$(get_current_task)
+                    if [[ -n "$current" ]] && task_exists "$current"; then
+                        task_name="$current"
+                    else
+                        log INFO "No task specified. Pick from existing tasks:"
+                        if pick_task "active"; then
+                            task_name="$PICKED_TASK"
+                        else
+                            exit 1
+                        fi
+                    fi
                 fi
             fi
 
@@ -1036,7 +1203,20 @@ main() {
             for arg in "$@"; do
                 [[ "$arg" == --task=* ]] && task_name="${arg#--task=}"
             done
-            task_name=$(resolve_task "$task_name" "status") || exit 1
+
+            if [[ -z "$task_name" ]]; then
+                local current
+                current=$(get_current_task)
+                if [[ -n "$current" ]] && task_exists "$current"; then
+                    task_name="$current"
+                else
+                    if pick_task "active"; then
+                        task_name="$PICKED_TASK"
+                    else
+                        exit 1
+                    fi
+                fi
+            fi
 
             if ! task_exists "$task_name"; then
                 log ERROR "Task not found: ${task_name}"
@@ -1051,7 +1231,21 @@ main() {
             for arg in "$@"; do
                 [[ "$arg" == --task=* ]] && task_name="${arg#--task=}"
             done
-            task_name=$(resolve_task "$task_name" "archive") || exit 1
+
+            if [[ -z "$task_name" ]]; then
+                local current
+                current=$(get_current_task)
+                if [[ -n "$current" ]] && task_exists "$current"; then
+                    task_name="$current"
+                else
+                    if pick_task "active"; then
+                        task_name="$PICKED_TASK"
+                    else
+                        exit 1
+                    fi
+                fi
+            fi
+
             archive_task "$task_name"
             ;;
 
@@ -1059,8 +1253,11 @@ main() {
         reactivate)
             local task_name="${1:-}"
             if [[ -z "$task_name" ]]; then
-                log ERROR "Specify a task name: ./motspilot.sh reactivate <name>"
-                exit 1
+                if pick_task "archived"; then
+                    task_name="$PICKED_TASK"
+                else
+                    exit 1
+                fi
             fi
             reactivate_task "$task_name"
             ;;
@@ -1071,7 +1268,20 @@ main() {
             for arg in "$@"; do
                 [[ "$arg" == --task=* ]] && task_name="${arg#--task=}"
             done
-            task_name=$(resolve_task "$task_name" "reset") || exit 1
+
+            if [[ -z "$task_name" ]]; then
+                local current
+                current=$(get_current_task)
+                if [[ -n "$current" ]] && task_exists "$current"; then
+                    task_name="$current"
+                else
+                    if pick_task "active"; then
+                        task_name="$PICKED_TASK"
+                    else
+                        exit 1
+                    fi
+                fi
+            fi
 
             if ! task_exists "$task_name"; then
                 log ERROR "Task not found: ${task_name}"
@@ -1093,7 +1303,20 @@ main() {
             done
 
             phase="${phase:-requirements}"
-            task_name=$(resolve_task "$task_name" "view") || exit 1
+
+            if [[ -z "$task_name" ]]; then
+                local current
+                current=$(get_current_task)
+                if [[ -n "$current" ]] && task_exists "$current"; then
+                    task_name="$current"
+                else
+                    if pick_task "active"; then
+                        task_name="$PICKED_TASK"
+                    else
+                        exit 1
+                    fi
+                fi
+            fi
 
             if ! task_exists "$task_name"; then
                 log ERROR "Task not found: ${task_name}"
@@ -1119,6 +1342,8 @@ main() {
             echo -e "    ${CYAN}./motspilot.sh view <phase> [--task=<name>]${NC}        View a phase artifact"
             echo ""
             echo -e "  ${BOLD}Global flag:${NC}  ${CYAN}--project=<path>${NC}  Override project directory detection"
+            echo ""
+            echo -e "  ${BOLD}Tip:${NC}  Omit ${CYAN}--task=${NC} on any command to get an interactive task picker."
             echo ""
             echo -e "  ${BOLD}Phases:${NC}  architecture · development · testing · verification · delivery"
             echo -e "  ${BOLD}View shortcuts:${NC}  req · arch · dev · test · verify · wo (workorder)"
