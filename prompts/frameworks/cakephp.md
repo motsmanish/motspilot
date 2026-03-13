@@ -188,6 +188,7 @@ public function register(): ?\Cake\Http\Response
 - Max 10-15 lines per action
 - Use `$this->request->getData()`, never `$_POST`
 - Use `$this->request->getQuery()`, never `$_GET`
+- **NEVER put business logic in controller private methods.** No `_handleFoo()`, `_processFoo()`, or similar private methods that contain DB queries, entity saves, or status changes. That logic belongs in a Table class or Service class. Controllers should ONLY parse input, call Table/Service methods, and handle the response (flash, redirect, set view vars). If a POST handler needs complex logic, create a method on the relevant Table class (e.g., `$this->Orders->createCampaign($id, $data)`) and call it from the controller.
 
 ---
 
