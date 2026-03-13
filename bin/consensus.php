@@ -31,7 +31,7 @@ declare(strict_types=1);
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 const CONNECT_TIMEOUT       = 15;
-const TIMEOUT_FLOOR         = 60;   // minimum seconds for any request
+const TIMEOUT_FLOOR         = 90;   // minimum seconds for any request (Claude API needs headroom)
 const TIMEOUT_CEILING       = 300;  // maximum seconds (5 min)
 const TIMEOUT_PER_1K_CHARS  = 5;    // extra seconds per 1,000 chars of prompt
 
@@ -218,11 +218,23 @@ function fan_out(string $prompt, array $keys, int $timeout, ?string $logFile = n
         } while ($running > 0);
     }
 
+    // Collect per-handle result codes from curl_multi (more reliable than curl_errno)
+    $multiResults = [];
+    while ($info = curl_multi_info_read($mh)) {
+        foreach ($handles as $hName => $hCh) {
+            if ($hCh === $info['handle']) {
+                $multiResults[$hName] = $info['result']; // CURLE_* constant
+                break;
+            }
+        }
+    }
+
     foreach ($handles as $name => $ch) {
         $httpCode  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $rawBody   = curl_multi_getcontent($ch);
-        $curlError = curl_error($ch);
-        $curlErrno = curl_errno($ch);
+        // Prefer curl_multi result code; fall back to curl_errno
+        $curlErrno = $multiResults[$name] ?? curl_errno($ch);
+        $curlError = $curlErrno !== CURLE_OK ? (curl_strerror($curlErrno) ?: curl_error($ch)) : curl_error($ch);
 
         curl_multi_remove_handle($mh, $ch);
         curl_close($ch);
@@ -242,8 +254,11 @@ function fan_out(string $prompt, array $keys, int $timeout, ?string $logFile = n
 
         if ($httpCode < 200 || $httpCode >= 300) {
             $snippet = mb_substr((string) $rawBody, 0, 300);
-            $failed[$name] = "HTTP {$httpCode}";
-            stderr("[$name] HTTP {$httpCode}: {$snippet}", $logFile);
+            $detail = $httpCode === 0
+                ? "HTTP 0 (no response received — likely timeout or connection drop)"
+                : "HTTP {$httpCode}";
+            $failed[$name] = $detail;
+            stderr("[$name] {$detail}" . ($snippet !== '' ? ": {$snippet}" : ''), $logFile);
             continue;
         }
 

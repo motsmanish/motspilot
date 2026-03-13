@@ -30,3 +30,4 @@ Desktop.ini
 # Research / internal docs (keep backup, not for public)
 RESEARCH_PUBLIC_RELEASE.md
 .motspilot/workspace/TASK_SEQUENCE.md
+/motspilot-data/*
