@@ -26,7 +26,9 @@ jobs:
         uses: luizm/action-sh-checker@master
         env:
           SHFMT_OPTS: -i 4 -ci
-          INPUT_SH_CHECKER_SHELLCHECK_DISABLE: true
+        with:
+          sh_checker_shellcheck_disable: true
+          sh_checker_checkbashisms_enable: false
 
   smoke-test:
     name: Smoke Test
