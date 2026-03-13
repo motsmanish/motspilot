@@ -932,7 +932,7 @@ get_last_modified() {
 }
 
 pick_task() {
-    local source="${1:-active}"  # "active", "archived", or "all"
+    local source="${1:-active}" # "active", "archived", or "all"
     local tasks=()
     local task_dirs=()
 
