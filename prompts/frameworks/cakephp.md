@@ -506,6 +506,102 @@ Use these Claude Code capabilities at the right time to save effort and catch mi
 
 ---
 
+## Mobile-First UI/UX Design Guidelines
+
+> These guidelines are for building CakePHP template UIs used by **non-technical users on mobile phones with slow mobile networks**.
+
+### Navigation
+
+1. **Icon-only arrow buttons for prev/next** — Never use text like "Previous" or "Next". Use `<i class="bi bi-chevron-left"></i>` and `<i class="bi bi-chevron-right"></i>` inside `btn btn-sm btn-outline-secondary`. Saves horizontal space on mobile.
+
+2. **Week navigation pattern:**
+   ```php
+   <div class="d-flex justify-content-between align-items-center">
+       <a href="?week=<?= $prevWeek ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-left"></i></a>
+       <strong style="font-size:0.9rem;"><?= $weekStart->format('d M') ?> — <?= $weekEnd->format('d M Y') ?></strong>
+       <a href="?week=<?= $nextWeek ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+   </div>
+   ```
+
+3. **Month navigation pattern:**
+   ```php
+   <a href="?month=<?= $prevMonth ?>"><i class="bi bi-chevron-left"></i> <?= $prevMonthName ?></a>
+   <strong><?= $monthStart->format('F Y') ?></strong>
+   <a href="?month=<?= $nextMonth ?>"><?= $nextMonthName ?> <i class="bi bi-chevron-right"></i></a>
+   ```
+   Month nav can include short month name next to the arrow (e.g., "Feb >") since there's more space than week labels.
+
+4. **"This Week" / "Current Month" button** — Only show when user has navigated away from current period. Hide when already on current period.
+
+5. **Preserve filters when navigating** — Carry forward active filters (e.g., category, user_id) via query parameters in prev/next links.
+
+### Tables & Data Display
+
+6. **No horizontal scrolling on mobile** — Show only essential columns (Name, ID, Total) in the main table. Put detailed/day-by-day data in a **modal popup** triggered by clicking the summary value.
+
+7. **Clickable totals for detail drilldown** — Summary numbers (e.g., totals, counts) should be clickable links that open a modal. Style: `text-primary font-weight-bold` with underline.
+
+8. **Modal for detail views** — Use `modal-dialog-centered modal-dialog-scrollable`. Layout:
+   - **Info card** — Name, ID
+   - **Summary card** — Key metrics in horizontal row (`d-flex justify-content-around text-center`)
+   - **Detail table** — Full breakdown (date, category, status)
+   - **Link to full page** — "View Full Report" button to the dedicated detail page
+
+9. **Skip modal tables for auto-download** — When auto-detecting tables for Excel export, use `table:not(.modal table)` selector so hidden modal tables don't get download buttons.
+
+10. **Fractional totals** — When items have partial values (e.g., Full = 1, Half = 0.5), display as integer when whole (e.g., "3"), decimal when not (e.g., "2.5").
+
+### Mobile-First Patterns
+
+11. **Card-based layouts over table rows** — For primary interaction screens (e.g., status marking, data entry), use cards with large touch targets. Colored left border indicates status (`border-left: 4px solid #28a745`).
+
+12. **Sticky filters on mobile** — Filter bars should be `position: sticky; top: 70px; z-index: 100; background: white;` so they stay visible while scrolling.
+
+13. **Fixed bottom action buttons on mobile:**
+    ```css
+    @media (max-width: 576px) {
+        .save-container {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 10px 15px; background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100;
+        }
+    }
+    ```
+
+14. **Large touch targets** — Action buttons: `padding: 10px 4px` minimum on mobile. Use `flex: 1` so buttons fill width equally.
+
+15. **Stat cards in 2-column grid** — Use `col-6 col-md-3` for 2x2 on mobile, 4-column on desktop. Large number + small label.
+
+### Interaction & Feedback
+
+16. **Double-tap prevention** — Disable submit buttons after first tap, show spinner:
+    ```javascript
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    ```
+
+17. **Loading overlay** — Full-screen semi-transparent overlay with centered spinner during form submissions.
+
+18. **Toast notifications for AJAX** — Temporary `alert` banners (`position-fixed; top:15px; right:15px; z-index:9999;`) that auto-dismiss after 4 seconds.
+
+19. **Consistent color coding:**
+    - Green (`text-success`, `badge-success`, `btn-success`) = Positive / Complete / Active
+    - Yellow/Orange (`text-warning`, `badge-warning`, `btn-warning`) = Partial / Pending
+    - Red (`text-danger`, `badge-danger`, `btn-danger`) = Negative / Missing / Inactive
+    - Blue (`text-primary`) = Totals / Neutral highlights
+
+20. **Confirmation for destructive actions** — `confirm()` before remove/delete. Show spinner on the button during AJAX call.
+
+### Component Patterns
+
+21. **AJAX search with dropdown** — Text input + `position-absolute` `list-group` dropdown. Debounce 300ms. "No results" message. Close on outside click.
+
+22. **Bulk action buttons** — Row of action buttons above a list for quick bulk operations. Use `flex-fill` so they share width equally.
+
+23. **Date input constraints** — When date picker operates within a specific range (e.g., a week), set `min` and `max` attributes to constrain selection.
+
+24. **Page heading element** — Use `ele_page_heading` element. Pass `downloadTableButton => true` for auto Excel download buttons.
+
 ---
 
 ## Self-Doubt Checklist
