@@ -181,4 +181,6 @@ Before finalizing, verify:
 - Every finding includes a specific file:line reference and quoted code.
 - The requirements coverage matrix accounts for every requirement, not just the ones that passed.
 - If the framework guide has verification checks, every one was run and results reported.
+- **Check for workarounds:** Look for any code or tests that work AROUND an issue instead of fixing it. Examples: tests that avoid calling certain methods, comments like "this doesn't work so we do X instead", try-catch blocks that swallow errors. These are red flags — the underlying issue should be fixed, not papered over.
+- **Review the development summary's Assumptions section.** Verify each assumption is correct. If any assumption is wrong, flag it as a finding.
 </self_check>
