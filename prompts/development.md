@@ -215,4 +215,17 @@ Before finalizing, verify:
 - No unescaped user input reaches templates.
 - No mass-assignment vulnerabilities in new models.
 - All new routes are added without conflicting with existing ones.
+- If a framework guide is provided, run every verification check from it (grep patterns, API correctness).
+- **NEVER work around issues.** If something seems wrong (e.g., a method doesn't exist, a test fails unexpectedly, an API behaves differently than expected), STOP and flag it. Do not adjust tests or code to accommodate what might be the wrong approach. Ask the user or clearly flag it as a blocker.
 </self_check>
+
+<assumptions>
+### Assumptions Register
+
+At the end of your development summary, you MUST include an "Assumptions Made" section listing every assumption you made during development. For each assumption:
+- State what you assumed
+- State why you assumed it (what evidence or lack thereof led to the assumption)
+- State the risk if the assumption is wrong
+
+This allows the user to verify assumptions before deployment. Never silently work around confusion — surface it.
+</assumptions>

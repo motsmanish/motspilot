@@ -12,6 +12,9 @@ This file is automatically included by the motspilot pipeline when `FRAMEWORK="c
 |------|----------------------|---------------------|
 | Custom finder params | `(Query $query, array $options)` | `(SelectQuery $query)` |
 | Query class | `Cake\ORM\Query` | `Cake\ORM\Query\SelectQuery` |
+| Query ORDER BY | `->order(['col' => 'ASC'])` | `->orderBy()`, `->orderByAsc()`, `->orderByDesc()` |
+| Query GROUP BY | `->group(['col'])` | `->groupBy()` (on Query — fine on Collection) |
+| Query select extra | N/A | `->selectAlso()` |
 | Table loading (controllers) | `$this->fetchTable('Name')` (4.3+) or `$this->getTableLocator()->get('Name')` | Only `$this->fetchTable()` |
 | Auth | AuthComponent or Authentication plugin (check which the project uses) | Authentication plugin only |
 | CSRF | `CsrfProtectionMiddleware` (cookie-based) | Also `SessionCsrfProtectionMiddleware` |
@@ -406,6 +409,20 @@ grep -r "SelectQuery" src/
 grep -r "use Cake\\ORM\\Query\\SelectQuery" src/
 # Should find ZERO results.
 
+# 5.x Query methods used instead of 4.x equivalents:
+grep -rn "->orderBy(" src/
+# Should find ZERO results. Use ->order() in 4.x.
+
+grep -rn "->orderByAsc(\|->orderByDesc(" src/
+# Should find ZERO results. Use ->order(['col' => 'ASC']) in 4.x.
+
+grep -rn "->groupBy(" src/
+# Should find ZERO results on Query chains. Use ->group() in 4.x.
+# NOTE: ->groupBy() on Collection/ResultSet (after ->all()) is fine.
+
+grep -rn "->selectAlso(" src/
+# Should find ZERO results. 5.x only.
+
 # Raw HTML forms instead of FormHelper:
 grep -rn "<form" templates/
 # Should only find results inside $this->Form->create() or existing code.
@@ -496,6 +513,9 @@ Use these Claude Code capabilities at the right time to save effort and catch mi
 After completing work, run through these:
 
 - Did I use `SelectQuery` anywhere? → Must be `Query` for 4.x
+- Did I use `->orderBy()` anywhere? → Must be `->order()` for 4.x
+- Did I use `->groupBy()` on a Query? → Must be `->group()` for 4.x (fine on Collection/ResultSet)
+- Did I use `->orderByAsc()` / `->orderByDesc()` / `->selectAlso()`? → 5.x only, not available in 4.x
 - Did I use `$this->fetchTable()` in a pre-4.3 project? → Use `$this->getTableLocator()->get()` instead
 - Did I create any `<form>` tags instead of `$this->Form->create()`?
 - Grep templates for `<?= $` without `h(` — any XSS holes?
