@@ -90,7 +90,7 @@ echo '/motspilot' >> .gitignore
 run motspilot pipeline
 ```
 
-Claude Code orchestrates all 5 phases, asks for your approval between each one, and archives the task automatically when delivery is approved.
+Claude Code orchestrates all 5 phases and archives the task automatically when delivery is approved. By default, phases run without pausing (`AUTO_APPROVE="all"`). Set `AUTO_APPROVE="none"` in `.motspilot/config` to approve each phase before it proceeds.
 
 ---
 
@@ -277,7 +277,7 @@ LANGUAGE="php"                  # Language: php, python, javascript, typescript,
 LANGUAGE_VERSION="8.2"          # Language version
 FRAMEWORK="cakephp"             # Framework: cakephp, laravel, django, nextjs, express, rails, etc.
 PROJECT_ROOT=".."               # Path to your project root (relative to motspilot/)
-AUTO_APPROVE="none"             # "none" = approve each phase, "all" = fully automatic
+AUTO_APPROVE="all"              # "all" = fully automatic, "none" = approve each phase
 TEST_CMD="./vendor/bin/phpunit" # How to run tests
 APP_URL="http://localhost:8080" # For smoke testing (verification phase)
 WORKSPACE_DIR=""                # Store task data in your project repo (see below)
@@ -359,7 +359,7 @@ echo "Design a caching strategy" | php motspilot/bin/consensus.php --phase=gener
 
 **Fault tolerant:** If 1 or 2 APIs fail, the service proceeds with whatever responses are available. All 3 fail = error. If consensus fails entirely, the pipeline continues without it — it's an enhancement, not a requirement.
 
-**Dynamic timeouts:** API timeouts scale automatically based on prompt length (60s floor, +5s per 1K chars, 300s ceiling). Judge calls get 1.5x. No hardcoded limits — large requirements documents get proportionally more time. Human-readable error messages for timeouts, DNS failures, and connection issues.
+**Dynamic timeouts:** API timeouts scale automatically based on prompt length (90s floor, +5s per 1K chars, 300s ceiling). Judge calls get 1.5x. No hardcoded limits — large requirements documents get proportionally more time. Human-readable error messages for timeouts, DNS failures, and connection issues.
 
 ---
 
@@ -368,7 +368,7 @@ echo "Design a caching strategy" | php motspilot/bin/consensus.php --phase=gener
 - **Start with the user** — think about who uses the feature before touching code
 - **Explore before building** — read existing code, do not assume
 - **Trace blast radius** — know what breaks before you change it
-- **Tiny build loops** — write → verify → write, not 500 lines then test
+- **Layered build order** — Foundation → Logic → Interface, verifying each against the architecture
 - **Security mindset** — think like an attacker at every step
 - **Never greenfield** — always integrating into existing apps, matching existing patterns
 - **One action per migration** — never combine unrelated changes in a single migration

@@ -6,8 +6,8 @@
 .motspilot/config
 .motspilot/notify.html
 
-# Claude Code IDE settings
-.claude/
+# Claude Code IDE settings (user-local overrides — not the committed settings.local.json)
+.claude/settings.json
 
 # OS artifacts
 .DS_Store
@@ -17,7 +17,6 @@ Desktop.ini
 # Editor configs
 .vscode/
 .idea/
-.cursorrules
 *.swp
 *.swo
 *~

@@ -1,7 +1,7 @@
 # motspilot — Cursor Integration Rules (MOTSTECH)
 
 ## Pipeline Awareness
-- Check `.motspilot/workspace/tasks/` for pipeline state
+- Check `.motspilot/config` for `WORKSPACE_DIR` — if set, tasks live at `<WORKSPACE_DIR>/tasks/`; otherwise at `.motspilot/workspace/tasks/`
 - Requirements: `01_requirements.md`
 - Architecture: `02_architecture.md`
 - Read these BEFORE making changes

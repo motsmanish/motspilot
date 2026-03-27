@@ -28,7 +28,7 @@ When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot")
 
 | Phase | Prompt | Artifact | Writes code? |
 |-------|--------|----------|--------------|
-| Consensus | `bin/consensus.php` (auto) | `tasks/<name>/00_consensus.md` | No |
+| Consensus | `bin/consensus.php` (auto) | `tasks/<name>/consensus/04_synthesis.md` | No |
 | Architecture | `prompts/architecture.md` | `tasks/<name>/02_architecture.md` | No |
 | Development | `prompts/development.md` | `tasks/<name>/03_development.md` | Yes |
 | Testing | `prompts/testing.md` | `tasks/<name>/04_testing.md` | Yes |
@@ -57,16 +57,21 @@ All phase prompts use these patterns (derived from Claude and Gemini best practi
 - **XML-tagged prompt assembly** — Orchestrator uses `<thinking_framework>`, `<requirements>`, `<consensus>`, `<previous_phases>`, `<task>` tags
 - **`<investigate_before_*>` guards** — Each phase has a phase-specific block preventing speculation about unread code
 - **`<anti_overengineering>` clauses** — Architecture and Development phases explicitly prevent scope creep
+- **`<output_scaling>` blocks** — Architecture, Development, and Delivery scale output depth to feature complexity (small/medium/large)
 - **`<self_check>` blocks** — Every phase ends with verification criteria before finalizing output
+- **`<blocker_handling>`** — Development phase uses structured BLOCKER markers instead of unrealistic "stop and ask" instructions
+- **`<severity_levels>`** — Verification uses a shared taxonomy (CRITICAL / SHOULD FIX / IMPROVE) with clear definitions
 - **`<example>` blocks** — Few-shot examples of good vs bad patterns where applicable
 - **Quote-grounded findings** — Verification must cite specific file:line and code before judging
+- **Context inclusion rules** — Orchestrator sends full text or summaries per phase to manage context window
+- **Architecture cross-reference** — Verification compares architecture file map against what was actually built
 
 ## Core Philosophy
 
 - Start with the person using the feature, not the code
 - Explore the existing codebase before touching anything
 - Trace the blast radius of every change
-- Build in tiny loops (write → verify → write)
+- Build in layers (Foundation → Logic → Interface), verifying each against the architecture
 - Think like an attacker about security
 - Never greenfield — always integrating into existing apps
 - One logical action per migration — never combine unrelated changes

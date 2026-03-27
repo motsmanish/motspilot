@@ -59,7 +59,12 @@ function load_env(string $path): array {
         }
         if (str_contains($line, '=')) {
             [$key, $value] = explode('=', $line, 2);
-            $vars[trim($key)] = trim($value);
+            $value = trim($value);
+            // Strip surrounding quotes (single or double)
+            if (preg_match('/^([\'"])(.*)\\1$/', $value, $qm)) {
+                $value = $qm[2];
+            }
+            $vars[trim($key)] = $value;
         }
     }
     return $vars;
@@ -509,7 +514,7 @@ function main(array $argv): int {
     } elseif ($opts['prompt'] !== '') {
         $prompt = $opts['prompt'];
     } else {
-        if (!posix_isatty(STDIN)) {
+        if (function_exists('posix_isatty') && !posix_isatty(STDIN)) {
             $prompt = stream_get_contents(STDIN);
         }
     }
@@ -629,7 +634,7 @@ function main(array $argv): int {
     // Write synthesis to stdout for backward compatibility / piping
     if ($synthesis !== null) {
         fwrite(STDOUT, $synthesis);
-    } elseif ($synthesis === null) {
+    } else {
         stderr('Synthesis failed. Outputting best raw response as fallback.', $logFile);
         $fallback = $responses['claude'] ?? $responses['gpt4o'] ?? $responses['gemini'] ?? '';
         fwrite(STDOUT, (string) $fallback);

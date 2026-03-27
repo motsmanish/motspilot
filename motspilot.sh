@@ -61,8 +61,19 @@ fi
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
 # MOTSPILOT_DIR: where the tool itself lives (prompts, scripts)
-# Resolve the real path even through symlinks
-MOTSPILOT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# Resolve the real path even through symlinks (portable — works on macOS and Linux)
+_resolve_symlink() {
+    local target="$1"
+    while [[ -L "$target" ]]; do
+        local dir
+        dir="$(cd "$(dirname "$target")" && pwd)"
+        target="$(readlink "$target")"
+        # Handle relative symlink targets
+        [[ "$target" != /* ]] && target="${dir}/${target}"
+    done
+    echo "$target"
+}
+MOTSPILOT_DIR="$(cd "$(dirname "$(_resolve_symlink "$0")")" && pwd)"
 
 # PROJECT_DIR: the project that is using motspilot
 #
@@ -920,12 +931,22 @@ get_phase_bar() {
 }
 
 # Get last-modified timestamp of the most recently changed file in a task dir
+# Portable — works on both GNU (Linux) and BSD (macOS) systems
 get_last_modified() {
     local tdir="$1"
     local epoch=""
-    epoch=$(find "$tdir" -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -rn | head -1 | cut -d. -f1)
+    # GNU find supports -printf, BSD find does not
+    if find --version 2>/dev/null | grep -q 'GNU' 2>/dev/null; then
+        epoch=$(find "$tdir" -maxdepth 1 -type f -printf '%T@\n' 2>/dev/null | sort -rn | head -1 | cut -d. -f1)
+    else
+        # BSD/macOS: use stat -f "%m" for epoch seconds
+        epoch=$(find "$tdir" -maxdepth 1 -type f -exec stat -f "%m" {} \; 2>/dev/null | sort -rn | head -1)
+    fi
     if [[ -n "$epoch" ]]; then
-        date -d "@${epoch}" '+%Y-%m-%d %H:%M' 2>/dev/null || echo "—"
+        # GNU date uses -d, BSD date uses -r
+        date -d "@${epoch}" '+%Y-%m-%d %H:%M' 2>/dev/null ||
+            date -r "${epoch}" '+%Y-%m-%d %H:%M' 2>/dev/null ||
+            echo "—"
     else
         echo "—"
     fi
@@ -1138,9 +1159,16 @@ main() {
                 create_requirements_template "$task_name"
             fi
 
-            # Write inline description to requirements if provided
+            # Write inline description to requirements — only for NEW tasks
+            # (don't overwrite requirements the user has already edited)
             if [[ -n "$inline_desc" ]]; then
-                write_requirements "$task_name" "$inline_desc"
+                local req_file
+                req_file=$(req_file "$task_name")
+                if [[ ! -f "$req_file" ]] || [[ ! -s "$req_file" ]] || grep -q '<!-- Describe what you want built' "$req_file" 2>/dev/null; then
+                    write_requirements "$task_name" "$inline_desc"
+                else
+                    log WARN "Requirements already edited — skipping overwrite. Description: ${inline_desc}"
+                fi
             fi
 
             # Validate requirements
