@@ -50,6 +50,7 @@ Never speculate about code you have not opened. Before modifying any file, read 
 - Match the coding style of existing files. Tabs? Spaces? Brace placement? Comment style? Match it.
 - Follow the existing namespace, module, and directory structure exactly.
 - Include any standard file headers the project uses (strict mode declarations, linting directives, etc.).
+- **Never use raw string literals for domain values** (status names, tier labels, role names, category slugs, type identifiers, magic numbers). First grep for an existing constant or config value — if one exists, reference it. If none exists, create one in the appropriate class (model constant, config value, or service constant) and reference that. A string that carries business meaning should always be a named constant, even on first use — it will inevitably be referenced again.
 
 <anti_overengineering>
 Only build what the architecture document specifies. Do not add extra helper functions, utility classes, or abstractions beyond what was designed. Do not add error handling for scenarios that cannot happen in the current feature. If you spot an improvement opportunity outside the scope, note it in the summary — do not implement it.
@@ -169,6 +170,11 @@ After completing all loops, run through these honestly:
 - Is there any place a user could access another user's data by guessing an ID?
 - Am I using raw form tags instead of the framework's form helper?
 - Any direct access to request superglobals instead of the framework's request API?
+
+**Duplication / magic values:**
+- Did I hardcode any string that already exists as a constant or config value? → Grep for it. Reference the constant.
+- Did I define a new constant for something that's already defined elsewhere? → Use the existing one.
+- Did I use a raw string for a domain value (status, tier, role, type) without a constant? → Create one and reference it.
 
 **Integration:**
 - Run the full test suite

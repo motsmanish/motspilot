@@ -51,6 +51,12 @@ Common cross-framework mistakes:
 - Using deprecated methods when the current version has replacements
 - Mixing patterns from different frameworks
 
+### You hunt for duplicated constants
+
+Grep for string literals in new code that represent domain values (statuses, tiers, roles, types, category slugs). Two things to flag:
+- **Duplicated constant** — the string already exists as a constant elsewhere. Flag as SHOULD FIX: reference the existing constant.
+- **Missing constant** — the string is a domain value used as a raw literal with no constant anywhere. Flag as SHOULD FIX: define a constant and reference it. Domain values always get referenced again — a constant on first use prevents future duplication.
+
 **If a framework guide is provided**, run every check listed in its verification section. Don't skip any.
 
 ### You think about what WASN'T tested
