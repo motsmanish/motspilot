@@ -174,6 +174,22 @@ motspilot/.motspilot/workspace/tasks/<task-name>/[NN_phase.md]
 </motspilot_phase>
 ```
 
+### Context inclusion rules
+
+Not every phase needs the full output of every previous phase. To manage context window size and reduce noise, use these rules for `<previous_phases>`:
+
+| Current Phase | Include full text | Include summary only |
+|---------------|-------------------|----------------------|
+| Architecture | requirements, consensus | — |
+| Development | requirements, architecture | consensus (key points only) |
+| Testing | development summary | architecture (File Map section only) |
+| Verification | development summary | architecture (File Map only), testing (results only) |
+| Delivery | verification report | development (file list + manual steps only) |
+
+**"Summary only"** means: extract only the File Map, test results, and manual steps — not the full narrative. This keeps later phases focused on what they actually need.
+
+If a subagent needs more context about a previous phase, it can read the artifact file directly from the task directory.
+
 ---
 
 ## Phase Definitions
@@ -257,10 +273,11 @@ If a framework guide is provided above, follow its specific test patterns,
 fixture conventions, and security test templates.
 
 Test priority order:
-1. Security (auth, CSRF, mass assignment, IDOR)
-2. Business logic edge cases
-3. Happy path
-4. Error paths
+1. Integration safety — existing tests still pass
+2. Security (auth, CSRF, mass assignment, IDOR)
+3. Business logic edge cases
+4. Happy path
+5. Error paths
 
 For each new route/action, test:
 - GET loads (200)

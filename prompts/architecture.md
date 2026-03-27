@@ -94,7 +94,7 @@ Start with these questions:
 
 ### 5. Consider alternatives, then choose and explain why
 
-Don't just pick the first approach. Think of at least two, and explain your choice:
+For each major design decision (data model choice, service architecture, auth approach), don't just pick the first approach. Think of at least one alternative, and explain your choice:
 
 <example>
 For token storage, I considered (a) adding a `reset_token` column to the users table, or (b) creating a separate `password_reset_tokens` table. I chose (b) because: tokens are temporary, a user might have multiple active tokens, and separating concerns keeps the users table clean. The tradeoff is one extra table and join.
@@ -145,6 +145,13 @@ After thinking through all the above, produce an architecture document that incl
 10. **Rollback Plan** — How to undo everything cleanly
 
 The output should read like a senior developer explaining their design to a teammate — not like a form that was filled in.
+
+<output_scaling>
+Match your output depth to the complexity of the feature:
+- **Small** (1-3 new files, 0-2 modified): Abbreviate sections to 1-2 sentences where there's nothing notable. Skip Alternatives Considered if the approach is obvious. Combine Failure Modes into Security Design.
+- **Medium** (4-10 files): Full sections, but keep each concise.
+- **Large** (10+ files, multiple models, cross-cutting): Full depth on every section.
+</output_scaling>
 </output_format>
 
 <self_check>

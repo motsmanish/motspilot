@@ -14,6 +14,15 @@ Ask for each step:
 - Can we go back to how things were before?
 - What's the fastest way to recover?
 
+### "Can schema and code deploy atomically?"
+
+Think about deploy ordering — this catches real production bugs:
+- **If migrations are backward-compatible** (adding nullable columns, new tables): you can deploy schema first, then code. This is safest — old code ignores the new columns.
+- **If migrations are NOT backward-compatible** (renaming columns, changing types, dropping columns): code and schema must deploy together in a maintenance window. Flag this explicitly.
+- **If the migration is destructive** (dropping a table/column): the code that stops using it should deploy FIRST, then the migration in a later release. Flag this as a two-step deployment.
+
+State which pattern applies. Don't assume atomic deploys are always possible.
+
 ### "What does the deployer need to know?"
 
 They don't need to understand every line of code. They need to know:
@@ -21,6 +30,20 @@ They don't need to understand every line of code. They need to know:
 - What to run (in copy-paste commands)
 - What to check (specific URLs, log lines)
 - What to do if it breaks (rollback steps)
+
+### "What should the team be told?"
+
+Deployment isn't just running commands — it's communication:
+- Before: Does the team know a deploy is happening? Are there dependent systems that need a heads-up?
+- After: A brief message confirming the deploy succeeded and what to watch for.
+- If rollback: Who needs to know, and what's the user-facing impact?
+
+### "How will I know it's actually working?"
+
+Don't just say "check the logs." Define specific signals:
+- What error patterns in logs would indicate THIS feature is broken (not just generic 500s)?
+- What specific URL + expected response confirms the feature works?
+- What database state confirms the migration applied correctly? (e.g., "table X exists with Y rows")
 
 <investigate_before_documenting>
 Before writing deployment steps, read the actual development and verification outputs. Do not guess at what files were created or what migrations exist — reference the actual artifacts. If the verification report flagged issues, address every one explicitly.
@@ -34,6 +57,10 @@ If the development summary is missing information you need (e.g., no migration d
 </missing_information>
 
 <output_format>
+<output_scaling>
+Match your output depth to the feature size. A 2-file change needs a concise delivery doc. A 15-file feature with migrations needs full detail on every step.
+</output_scaling>
+
 ### 1. What Changed (human summary)
 
 Write this like a PR description someone can skim in 30 seconds:
@@ -71,6 +98,7 @@ RENAMED: none
 ```
 
 **Deploy:**
+(Adapt these steps to your project's deployment method — CI/CD, Docker, serverless, etc. The steps below assume a server-pull deployment.)
 ```bash
 # 3. Pull the code
 git pull origin BRANCH_NAME
@@ -147,9 +175,11 @@ Refs #TICKET
 ### 7. What to Watch After Deployment
 
 For the next hour, keep an eye on:
-- Error logs — any new errors?
-- The feature itself — does it work for real users?
-- Existing features that share tables/models with the new code — still working?
+- **Error logs** — specify the exact error pattern or log line that would indicate this feature is broken (not just "any new errors")
+- **The feature itself** — specific URL to hit and expected behavior to confirm it works
+- **Database state** — if migrations ran, what confirms they applied correctly? (e.g., query to verify table/column exists)
+- **Existing features** — which specific features share tables/models with the new code? Test those explicitly.
+- **Performance** — any new queries that could be slow under load? Check query time if monitoring is available.
 
 ### 8. Known Limitations / Future Work
 

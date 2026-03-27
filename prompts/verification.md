@@ -99,6 +99,14 @@ Go back to the requirements document. For every acceptance criterion:
 - Find the test that proves it
 - If either is missing → flag it
 
+### 2.5. Does the implementation match the architecture?
+
+Compare the architecture document's File Map against the development summary's file list:
+- Were any planned files NOT created? → Flag as MISSING with severity based on impact.
+- Were any unplanned files created? → Verify they're justified (the development summary should explain deviations).
+- For modified files: does the actual change match what the architecture specified? → Flag divergences.
+- Were any architecture assumptions invalidated during development? → Cross-reference the development summary's Assumptions section.
+
 ### 3. Is the code secure?
 
 Follow the data. Trust nothing.
@@ -128,7 +136,14 @@ Not "does it follow a checklist" but "would I want to maintain this?"
 </check_priority_order>
 
 <reporting_issues>
-Don't just list them. For HIGH severity issues, quote the problematic code and provide the fix:
+<severity_levels>
+Use these severity levels consistently across all findings:
+- **CRITICAL** — Security vulnerability, data loss risk, or will crash in production. Must fix before delivery.
+- **SHOULD FIX** — Correctness issue, logic error, or architectural violation. Should fix before delivery; document risk if deferred.
+- **IMPROVE** — Code quality, maintainability, or minor convention violation. Note but don't block delivery.
+</severity_levels>
+
+Don't just list them. For CRITICAL issues, quote the problematic code and provide the fix:
 
 <example>
 Bad finding (vague):
@@ -142,8 +157,8 @@ Good finding (grounded in actual code):
 The variable `user.bio` is output without escaping. Fix: use the framework's escape function — `<p>{escape(user.bio)}</p>`. This allows an attacker to inject JavaScript via their bio field."
 </example>
 
-For MEDIUM issues, explain the risk and suggest a fix.
-For LOW issues, note them but don't block delivery.
+For SHOULD FIX issues, explain the risk and suggest a fix.
+For IMPROVE issues, note them but don't block delivery.
 </reporting_issues>
 
 <output_format>
@@ -166,6 +181,15 @@ For LOW issues, note them but don't block delivery.
 | 4 | IMPROVE | Magic number | service.js:30 | Hard to understand | Use named constant |
 
 **Critical issues must be fixed before delivery.**
+
+**Verified OK (no issues found):**
+
+| Area | What was checked | Files |
+|------|-----------------|-------|
+| [e.g., Auth enforcement] | [e.g., All 3 new routes require login] | [e.g., Controller.php:15,30,45] |
+| [e.g., Output escaping] | [e.g., All template variables use h()] | [e.g., template1.php, template2.php] |
+
+This section provides positive attestation — it shows what was reviewed and found correct, not just what failed.
 
 **Requirements coverage:**
 For each requirement from the requirements document, state: MET / PARTIALLY MET / NOT MET, with the file:line that implements it.

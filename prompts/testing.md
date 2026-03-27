@@ -83,7 +83,7 @@ Good test names that each answer one specific question:
 - testCalculateDiscountReturnsZeroForNonEligible
 </example>
 
-Each test answers one question. The test name IS the question.
+Each test answers one question. The test name IS the question. Match the naming convention of existing tests in the project (camelCase, snake_case, annotations, etc.) — don't impose a different style.
 
 ### Security tests: "Can an attacker break this?"
 

@@ -61,6 +61,8 @@ declare(strict_types=1);
 
 ## Migration Patterns
 
+Migration files use timestamp naming: `YYYYMMDDHHMMSS_DescriptiveName.php` (e.g., `20260327120000_AddStatusToOrders.php`). Use `bin/cake bake migration AddStatusToOrders` to generate with correct timestamp, or name manually if baking isn't available.
+
 **One logical action per migration file.** Each migration should do exactly ONE thing:
 - Creating a table → one migration
 - Adding columns to an existing table → one migration
@@ -124,6 +126,71 @@ public function findActive(Query $query, array $options): Query
 ```
 Use `Cake\ORM\Query`, NOT `Cake\ORM\Query\SelectQuery`.
 
+### Validation vs Rules
+
+CakePHP separates these — don't confuse them:
+- **`validationDefault()`** — Format and presence checks (required, maxLength, email format). Runs before save, operates on raw input. Put field-level validation here.
+- **`buildRules()`** — Application/database rules (uniqueness, foreign key existence, custom business rules). Runs during save, has access to the entity. Put `isUnique`, `existsIn` here.
+
+```php
+// In Table class
+public function validationDefault(Validator $validator): Validator
+{
+    $validator->requirePresence('email', 'create')
+        ->notEmptyString('email')
+        ->email('email');
+    return $validator;
+}
+
+public function buildRules(RulesChecker $rules): RulesChecker
+{
+    $rules->add($rules->isUnique(['email']), ['errorField' => 'email', 'message' => 'Email already exists']);
+    return $rules;
+}
+```
+
+### Associations
+
+When adding associations (`hasMany`, `belongsTo`, `hasOne`, `belongsToMany`):
+- Match the existing association style in the Table class (inline in `initialize()` or separate methods)
+- Set `'dependent' => true` on `hasMany`/`hasOne` if child records should be deleted when the parent is deleted
+- Set `'cascadeCallbacks' => true` if the child entity has callbacks/behaviors that must fire on delete (slower — only when needed)
+- Always verify the foreign key column exists before adding the association
+
+### Query Containment
+
+Use `->contain()` to eager-load associations and avoid N+1 queries:
+```php
+// Good: one query for orders + one for items
+$orders = $this->Orders->find()->contain(['Items'])->all();
+
+// Bad: N+1 — loads items separately for each order
+$orders = $this->Orders->find()->all();
+foreach ($orders as $order) {
+    $items = $order->items; // lazy load = extra query per order
+}
+```
+
+Only contain what you need. Deep containment (`contain(['Users.Roles.Permissions'])`) can generate expensive JOINs.
+
+### Pagination
+
+Controllers use `$this->paginate()` with settings defined as a property:
+```php
+// In controller
+public $paginate = [
+    'limit' => 25,
+    'order' => ['created' => 'desc'],
+    'contain' => ['Users'],
+];
+
+// In action
+$results = $this->paginate($this->MyTable->find('active'));
+$this->set(compact('results'));
+```
+
+Match the existing pagination style and limits in the project. Templates use `$this->Paginator->` helpers for links.
+
 Validate in Table classes, not Controllers.
 
 ---
@@ -159,6 +226,23 @@ public function registerUser(array $data): User
 - `$this->redirect()` (that's a controller concern)
 
 Use `LocatorAwareTrait` to access tables. Constructor loads table references. Methods throw domain-specific exceptions (not `\Exception`).
+
+### Exception Handling
+
+CakePHP exceptions auto-map to HTTP status codes — use them instead of manual error handling:
+```php
+use Cake\Http\Exception\NotFoundException;
+use Cake\Http\Exception\ForbiddenException;
+use Cake\Http\Exception\BadRequestException;
+
+// In controller — these render the appropriate error page automatically
+$order = $this->Orders->get($id); // Throws NotFoundException if not found
+if ($order->user_id !== $userId) {
+    throw new ForbiddenException('You do not have access to this resource.');
+}
+```
+
+For service-layer errors, create domain-specific exceptions in `src/Exception/` and catch them in the controller to set flash messages + redirect.
 
 ---
 
@@ -274,6 +358,63 @@ sendEmail(['template' => 'dump', 'vars' => ['body' => $body]]);
 - `templates/email/html/email_hnc_weekly_profitability.php` — table report with totals row
 - `templates/email/html/email_hnc_budget_threshold.php` — summary + data table
 - `templates/layout/email/html/default_email_layout.php` — shared layout (header, footer, hello block)
+
+---
+
+## Console Command Patterns
+
+CakePHP 4.x uses Console Commands (not the older Shell system, though legacy projects may still have Shells).
+
+```php
+// src/Command/SendReportCommand.php
+<?php
+declare(strict_types=1);
+
+namespace App\Command;
+
+use Cake\Command\Command;
+use Cake\Console\Arguments;
+use Cake\Console\ConsoleIo;
+use Cake\Console\ConsoleOptionParser;
+
+class SendReportCommand extends Command
+{
+    public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
+    {
+        $parser->addArgument('type', ['help' => 'Report type', 'required' => true]);
+        $parser->addOption('dry-run', ['help' => 'Preview without sending', 'boolean' => true]);
+        return $parser;
+    }
+
+    public function execute(Arguments $args, ConsoleIo $io): int
+    {
+        // Use services for business logic, not inline here
+        $io->out('Report sent.');
+        return static::CODE_SUCCESS;
+    }
+}
+```
+
+- Check whether the project uses Commands or legacy Shells — match the existing pattern
+- Run with `bin/cake send_report weekly`
+- Return `CODE_SUCCESS` (0) or `CODE_ERROR` (1) — never `exit()`
+- Use `ConsoleIo` for output, not `echo`
+
+---
+
+## Date/Time Handling
+
+CakePHP 4.x uses `Cake\I18n\FrozenTime` (immutable) — do NOT use PHP's native `DateTime`:
+```php
+use Cake\I18n\FrozenTime;
+
+$now = FrozenTime::now();
+$yesterday = FrozenTime::now()->subDays(1);
+$formatted = $now->format('Y-m-d H:i:s');
+$iso = $now->toIso8601String();
+```
+
+Database datetime columns are automatically hydrated as `FrozenTime` objects on entities. Use `->format()` in templates, not PHP's `date()`.
 
 ---
 
@@ -399,7 +540,7 @@ class VerificationTokensFixture extends TestFixture
 
 ## Verification Checks
 
-Run these searches to catch common mistakes:
+Run these searches to catch common mistakes. **Note for subagents:** Use the Grep tool (not shell `grep`) for these checks — it handles permissions correctly and integrates with the tool output.
 
 ```bash
 # 5.x API used instead of 4.x:
@@ -506,7 +647,9 @@ Use these Claude Code capabilities at the right time to save effort and catch mi
 
 ---
 
-## Mobile-First UI/UX Design Guidelines
+## Mobile-First UI/UX Design Guidelines (Project-Specific)
+
+> **Note:** The guidelines below are specific to THIS project's conventions (Bootstrap 5, Bootstrap Icons, inline CSS for emails). Other CakePHP projects may use different UI frameworks. When in doubt, check the project's existing templates.
 
 > These guidelines are for building CakePHP template UIs used by **non-technical users on mobile phones with slow mobile networks**.
 
@@ -618,3 +761,8 @@ After completing work, run through these:
 - Check every entity `$_accessible` — any dangerous fields set to true?
 - Is there any place a user could access another user's data by guessing an ID?
 - Raw `$_POST` or `$_GET` anywhere? Must use `$this->request->getData()` / `getQuery()`
+- Did I use PHP's native `DateTime` instead of `Cake\I18n\FrozenTime`?
+- Did I put uniqueness/existence checks in `validationDefault()` instead of `buildRules()`?
+- Did I lazy-load associations in a loop instead of using `->contain()`?
+- Did I put business logic in a Console Command instead of a service?
+- Did I add an association without checking if the foreign key column exists?
