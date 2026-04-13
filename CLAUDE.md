@@ -65,6 +65,7 @@ All phase prompts use these patterns (derived from Claude and Gemini best practi
 - **Quote-grounded findings** — Verification must cite specific file:line and code before judging
 - **Context inclusion rules** — Orchestrator sends full text or summaries per phase to manage context window
 - **Architecture cross-reference** — Verification compares architecture file map against what was actually built
+- **Constants discipline** — Development greps for existing constants before coding domain values (statuses, tiers, roles); Verification flags duplicated or missing constants as SHOULD FIX
 
 ## Core Philosophy
 

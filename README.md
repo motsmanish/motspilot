@@ -208,6 +208,7 @@ Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Pr
 - **Completeness contracts** — Verification must read every file; development must complete every planned file
 - **Assumption-gating** — Ambiguous requirements must be stated explicitly, never silently filled in
 - **Quote-grounded findings** — Verification must quote specific code lines before making judgments
+- **Constants discipline** — Development greps for existing constants before coding domain values (statuses, tiers, roles); Verification flags duplicated or missing constants as SHOULD FIX
 
 Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one exists for your framework.
 
