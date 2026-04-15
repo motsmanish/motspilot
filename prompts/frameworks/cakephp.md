@@ -610,11 +610,45 @@ composer install --no-dev --optimize-autoloader
 bin/cake cache clear_all
 ```
 
-### Smoke test
+### Smoke tests
+
+Every smoke test must assert **both** that the route is reachable **and** that the route's expected side effect actually happened. Status-code-only tests can't distinguish "works" from "silently broken" — a 200 with an empty insert is still a bug.
+
+Generic template:
+
 ```bash
-curl -s -o /dev/null -w "%{http_code}" https://APP_URL/          # Homepage → 200
-curl -s -o /dev/null -w "%{http_code}" https://APP_URL/login      # Login → 200
-curl -s -o /dev/null -w "%{http_code}" https://APP_URL/new-route  # New route → 200
+# Entry-point check — proves the route is reachable
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' https://APP_URL/new-route)
+test "$HTTP_CODE" = "200" || { echo "FAIL: route unreachable ($HTTP_CODE)"; exit 1; }
+
+# Side-effect check — proves the route did the expected work.
+# Example: if the route writes to a DB table, assert the row landed
+# Example: if the route sends an email, assert the mail catcher received it
+# Example: if the route updates cache, assert the cache key changed
+# Adapt this pattern to the framework's preferred DB/email/cache tooling.
+```
+
+**CakePHP-specific shape (adapt, don't copy):** the cleanest way to query a side effect from a shell script is to drop into `bin/cake` and use `TableRegistry`. If the project doesn't already expose a shell one-liner command, add a small `src/Command/SmokeCountCommand.php` wrapper, or fall back to the `mysql` CLI with `-e`. Example shape assuming a `SmokeCountCommand` that takes a table and a `since` argument:
+
+```bash
+ROW_COUNT=$(bin/cake smoke_count Widgets --since="-1 minute")
+test "$ROW_COUNT" -gt 0 || { echo "FAIL: expected row in widgets"; exit 1; }
+```
+
+Or, direct DB query when a command wrapper is overkill:
+
+```bash
+ROW_COUNT=$(mysql -N -B -e "SELECT COUNT(*) FROM widgets WHERE created >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)" mydb)
+test "$ROW_COUNT" -gt 0 || { echo "FAIL: expected row in widgets"; exit 1; }
+```
+
+For email side effects, use whichever mail catcher the project runs (Mailpit, MailHog, smtp4dev). Mailpit and MailHog expose a compatible HTTP API on port 8025 by default: `curl -s http://localhost:8025/api/v2/messages | jq '.total'` and assert the count increased.
+
+> The delivery phase gates on smoke test execution — see `prompts/delivery.md` section 3.2. Smoke tests without side-effect checks are treated as zero tests and fail the phase.
+
+Check logs after deploy:
+```bash
+tail -f logs/error.log logs/debug.log
 ```
 
 ---
@@ -630,7 +664,7 @@ Use these Claude Code capabilities at the right time to save effort and catch mi
 | **`/simplify`** | After finishing code | Catches inline HTML in business logic, duplication, missed reuse opportunities |
 | **Background tasks** (`run_in_background`) | DB imports, long migrations, full test suites | Avoids timeout on commands that take > 2 minutes |
 | **Parallel tool calls** | Independent file reads, searches, glob+grep combos | Don't read 5 files sequentially when you can read them all at once |
-| **MailHog API check** (`curl localhost:8025/api/v2/messages`) | After any feature that sends email | Visually verify the email rendered correctly — fonts, colors, no white-on-white |
+| **Mail catcher API check** (`curl localhost:8025/api/v2/messages` — Mailpit/MailHog) | After any feature that sends email | Visually verify the email rendered correctly — fonts, colors, no white-on-white |
 
 ### When to use which agent
 

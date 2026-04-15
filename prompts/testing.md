@@ -118,6 +118,46 @@ Don't just test the obvious cases. Think about:
 The question isn't "will the input be accepted?" The question is "will the app handle it gracefully — not crash, not expose data, not corrupt state?"
 </test_patterns>
 
+### Integration tests vs reflection/unit tests — when to use which
+
+Reflection-based unit tests are fast, isolated, and framework-friendly. They are the right choice for:
+- Pure functions, validation logic, sanitizers, helper methods
+- Service classes with no framework-plumbing dependencies
+- Data transformations where the input and output are pure values
+
+They are the WRONG choice for testing code that runs only inside framework plumbing you don't control: event dispatchers, middleware pipelines, observer chains, lifecycle hooks, cron schedulers, background job queues.
+
+**Hard rule:** if the production path for a change goes through framework plumbing (events, middleware, observers, hooks, schedulers, queues), AT LEAST ONE test must exercise that plumbing end-to-end. Reflection-based unit tests are not sufficient. The test must prove that the dispatch/middleware/observer/queue mechanism itself routes control to the new code — not just that the new code does the right thing when given a correctly-shaped input directly.
+
+### Why this rule exists
+
+A reflection-based unit test that invokes `$listener->handleFoo($mockEvent)` directly proves the handler is correct. It does NOT prove:
+
+- The listener is subscribed to the right event name
+- The event name the listener subscribes to is actually emitted by any dispatch site in the target codebase
+- The dispatcher is loaded before the listener is registered
+- The target application's custom controllers actually go through the plugin-emission path (vs. bypassing it with their own code)
+
+All four of those are runtime-plumbing facts that only a real-dispatch test can verify. "20 passing unit tests" that never trigger a real dispatch are zero coverage for the plumbing seam.
+
+### Integration test patterns that survive test-DB limitations
+
+Sometimes the test DB can't run the production driver's features (SQLite can't do `FOR UPDATE SKIP LOCKED`, window functions, stored procedures, full JSON operators, etc.). This does NOT excuse skipping the integration test. Use one of these patterns:
+
+1. **SQL-string generation assertions.** Don't execute the query; assert the generated SQL as a string. Proves the code produces the right SQL without needing to run it.
+2. **Driver-gated branches.** Inside the test, check `$connection->getDriver() instanceof <ProdDriverClass>`. On production-compatible infrastructure run the real path; on SQLite run an assertion against the same invariant at a different level (e.g. "the ORM produced a query that includes the FOR UPDATE clause").
+3. **Event-dispatch simulations.** Instead of invoking the handler directly with a mock event, dispatch the real event through the real global dispatcher and assert the handler ran (spy/probe the side effect). This proves the subscription, the dispatcher, the event name, and the handler all line up.
+4. **Smoke-test delegation.** If no integration test can be written against the test harness, the delivery phase MUST queue a side-effect-asserting smoke test for that code path. This is the ONLY acceptable reason to skip an integration test for plumbing-dependent code. Note it in the testing summary as `[DELEGATED-TO-SMOKE]` with the specific smoke test the delivery phase will run.
+
+### What the testing summary must record
+
+For every runtime path in the dev summary, classify it as:
+- `(a) pure-logic` — unit test sufficient
+- `(b) framework-plumbing-dependent` — MUST have an integration/driver-gated/real-dispatch test, or `[DELEGATED-TO-SMOKE]` with a specific smoke test spec
+- `(c) external I/O` — must exercise the external I/O against the test-harness equivalent (in-memory DB, mock HTTP server, temp filesystem)
+
+Include this classification table in the testing summary so the verification phase can cross-check that every (b) path has real coverage or a delegated smoke test.
+
 <fixtures>
 ### Fixtures / test data: Think about them as scenarios
 
@@ -186,11 +226,39 @@ WHAT I'M STILL CONCERNED ABOUT:
 ```
 </output_format>
 
-<self_check>
-Before finalizing, verify:
-- The baseline was recorded before writing any tests.
-- Every new route/action from the development phase has at least one security test.
-- Existing tests still pass — compare to baseline.
-- Test names clearly describe what they verify, not how they work.
-- No test is hardcoded to pass — each one actually asserts meaningful behavior.
-</self_check>
+<completion_checklist>
+## Completion checklist
+
+### Contract
+
+- This phase is NOT COMPLETE until every box below has a recorded result.
+- In your phase output doc, emit a short "Completion checklist results"
+  section with one line per item below in the form:
+    `[x] <item number> — done. Evidence: <file:line / recorded output / section reference>`
+    `[N/A] <item number> — <one-sentence justification>`
+    `[ ] <item number> — not done. Reason: <why>`
+  Do not copy the full instruction text — just the result line.
+- Unchecked boxes (`[ ]`), `[N/A]` without justification, and `[x]`
+  without evidence all count as the phase being INCOMPLETE.
+- "It's a small change" and "unit tests cover it" are not valid `[N/A]`
+  justifications for integration/smoke items — those have their own
+  handling in the Testing and Delivery phases.
+- The verification phase (or the operator, for verification itself)
+  may refuse any phase output that has missing results, unjustified
+  N/A entries, or evidence-free checks.
+
+### Items
+
+1. I read the architecture doc's test strategy section.
+2. I read the dev summary in full.
+3. For every new or modified symbol, I identified the runtime path(s) it participates in.
+4. For every runtime path, I classified it as (a) pure logic, (b) framework-plumbing-dependent, or (c) external I/O. Classification table recorded in the testing summary.
+5. Every (a) path has at least one unit test.
+6. Every (b) path has at least one test that exercises the real dispatch/middleware/observer/queue mechanism, OR is marked `[DELEGATED-TO-SMOKE]` with a specific smoke test spec.
+7. Every (c) path has at least one test that exercises the external I/O against the test-harness equivalent.
+8. I ran the new test files and recorded the EXACT output (test counts, assertions, passes/fails).
+9. I ran the broader test subset that touches the modified area and confirmed zero new failures.
+10. Zero tests are in skipped/incomplete/risky state. Any intentional skips have a recorded justification.
+11. I did NOT edit any source file outside the test directory.
+12. I wrote the testing summary to the workspace path for this task.
+</completion_checklist>

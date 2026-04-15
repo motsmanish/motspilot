@@ -122,7 +122,7 @@ If the feature generates emails, PDFs, reports, or any user-facing output:
 - **Send a test and visually verify it renders correctly** — fonts, colors, contrast, spacing
 - Check for white-on-white or invisible text issues (especially in HTML emails where layout styles can override inline styles)
 - Compare against an existing similar output — does the new one match the established look and feel?
-- If the project has a local email catcher (MailHog, Mailpit, etc.), use it to inspect the rendered email
+- If the project has a local email catcher (Mailpit, MailHog, smtp4dev, or equivalent), use it to inspect the rendered email
 
 A feature that "sends an email" isn't done until someone has looked at that email.
 </verify_visual_output>
@@ -274,14 +274,39 @@ For each requirement from the requirements document, state: MET / PARTIALLY MET 
 - [Scenarios that should be monitored after deployment]
 </output_format>
 
-<self_check>
-Before finalizing, verify:
-- Every file from the development summary was actually opened and read (not just described from the summary).
-- Every finding includes a specific file:line reference and quoted code.
-- The requirements coverage matrix accounts for every requirement, not just the ones that passed.
-- If the framework guide has verification checks, every one was run and results reported.
-- **Check for workarounds:** Look for any code or tests that work AROUND an issue instead of fixing it. Examples: tests that avoid calling certain methods, comments like "this doesn't work so we do X instead", try-catch blocks that swallow errors. These are red flags — the underlying issue should be fixed, not papered over.
-- **Review the development summary's Assumptions section.** Verify each assumption is correct. If any assumption is wrong, flag it as a finding.
-- **All four consistency checks were run and results recorded** in the verification report (data-value, symbol-name, timezone, event-name).
-- **No SHOULD FIX or untested-seam items were deferred as notes in a READY verdict.** A READY WITH NOTES verdict is only valid when every remaining note is IMPROVE-tier.
-</self_check>
+<completion_checklist>
+## Completion checklist
+
+### Contract
+
+- This phase is NOT COMPLETE until every box below has a recorded result.
+- In your phase output doc, emit a short "Completion checklist results"
+  section with one line per item below in the form:
+    `[x] <item number> — done. Evidence: <file:line / recorded output / section reference>`
+    `[N/A] <item number> — <one-sentence justification>`
+    `[ ] <item number> — not done. Reason: <why>`
+  Do not copy the full instruction text — just the result line.
+- Unchecked boxes (`[ ]`), `[N/A]` without justification, and `[x]`
+  without evidence all count as the phase being INCOMPLETE.
+- "It's a small change" and "unit tests cover it" are not valid `[N/A]`
+  justifications for integration/smoke items — those have their own
+  handling in the Testing and Delivery phases.
+- The verification phase (or the operator, for verification itself)
+  may refuse any phase output that has missing results, unjustified
+  N/A entries, or evidence-free checks.
+
+### Items
+
+1. I read the requirements, architecture, development summary, and testing summary in full.
+2. I read the ACTUAL modified source files from disk, not just the dev summary's claims.
+3. I ran the project's syntax check on every modified file myself.
+4. I ran the new test files myself and recorded the EXACT output.
+5. I ran all four consistency checks (data-value, symbol-name, timezone, event-name dispatch). Results recorded.
+6. I enumerated every runtime seam introduced by the task. For each, I confirmed test or side-effect-asserting smoke coverage. Seam coverage table recorded.
+7. Any uncovered seam is raised as MUST FIX (untested seam) with verdict NOT READY. Not downgraded, not deferred.
+8. Every direct side-effect from the task (DB write, cache write, email queued, file created) has a test that asserts the side effect landed.
+9. Framework-guide verification checks were all run and results reported.
+10. I walked through each acceptance criterion in the requirements doc and marked PASS/FAIL/N/A with evidence.
+11. The verdict is BLOCKER/NOT READY, MUST FIX (untested seam)/NOT READY, READY WITH NOTES (IMPROVE-tier only), or READY.
+12. I wrote the verification report to the workspace path for this task.
+</completion_checklist>

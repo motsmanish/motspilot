@@ -218,17 +218,6 @@ MANUAL STEPS NEEDED:
 ```
 </output_format>
 
-<self_check>
-Before finalizing, verify:
-- Every file in the architecture's File Map has been created or modified (or explicitly skipped with reason).
-- The test baseline was recorded and the final test count is reported.
-- No unescaped user input reaches templates.
-- No mass-assignment vulnerabilities in new models.
-- All new routes are added without conflicting with existing ones.
-- If a framework guide is provided, run every verification check from it (grep patterns, API correctness).
-- **NEVER work around issues.** If something seems wrong (e.g., a method doesn't exist, a test fails unexpectedly, an API behaves differently than expected), do not silently adjust your approach. See `<blocker_handling>` below.
-</self_check>
-
 <blocker_handling>
 If you encounter something that seems wrong (method doesn't exist, test fails unexpectedly, API behaves differently than documented):
 
@@ -252,3 +241,40 @@ At the end of your development summary, you MUST include an "Assumptions Made" s
 
 This allows the user to verify assumptions before deployment. Never silently work around confusion — surface it.
 </assumptions>
+
+<completion_checklist>
+## Completion checklist
+
+### Contract
+
+- This phase is NOT COMPLETE until every box below has a recorded result.
+- In your phase output doc, emit a short "Completion checklist results"
+  section with one line per item below in the form:
+    `[x] <item number> — done. Evidence: <file:line / recorded output / section reference>`
+    `[N/A] <item number> — <one-sentence justification>`
+    `[ ] <item number> — not done. Reason: <why>`
+  Do not copy the full instruction text — just the result line.
+- Unchecked boxes (`[ ]`), `[N/A]` without justification, and `[x]`
+  without evidence all count as the phase being INCOMPLETE.
+- "It's a small change" and "unit tests cover it" are not valid `[N/A]`
+  justifications for integration/smoke items — those have their own
+  handling in the Testing and Delivery phases.
+- The verification phase (or the operator, for verification itself)
+  may refuse any phase output that has missing results, unjustified
+  N/A entries, or evidence-free checks.
+
+### Items
+
+1. I read the architecture doc in full.
+2. I read the current state of every file in the File Map (in full, or enough to verify the change points still exist where the architecture said).
+3. For every modify in the File Map, I confirmed the target lines/symbols still exist at the expected location. Drift is recorded in the dev summary with adjusted insertion points.
+4. I executed every change in the File Map. No additions beyond the File Map. No skips. Deviations documented with justification.
+5. I ran the project's syntax check (php -l / tsc --noEmit / go vet / equivalent) on every modified file. All passed. Output recorded in the dev summary.
+6. I ran `git status --short` and confirmed the change set matches the File Map exactly.
+7. I did NOT run `git commit` or `git push`.
+8. I did NOT touch files outside the File Map. Any unrelated touches are reverted before submission.
+9. The dev summary has a "Files modified" section with exact line ranges for each change.
+10. The dev summary has a "Deviations from architecture" section (empty "None" entry is valid).
+11. The dev summary has a "Manual deploy steps" section covering migrations, cache clears, config flag flips, or environment changes.
+12. I wrote the dev summary to the workspace path for this task.
+</completion_checklist>

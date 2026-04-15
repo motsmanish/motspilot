@@ -139,7 +139,7 @@ git pull origin BRANCH_NAME
 Every new route, controller action, event listener, queue consumer, or scheduled job introduced by this task MUST have a smoke test with BOTH of the following checks. A smoke test that asserts only an HTTP status code (or only a CLI exit code, or only a "message enqueued" log line) counts as ZERO tests — it is indistinguishable from a broken feature at the surface layer.
 
 1. **Entry-point check** — proves the code path is reachable. HTTP status, CLI exit code, queue-arrival confirmation, cron-fired timestamp. NOT sufficient on its own.
-2. **Side-effect check** — proves the feature did the work it exists to do. The SPECIFIC observable effect: a row in a named table matching a predicate, an email in MailHog/Mailpit, a file written to disk, a cache key with an expected value, an outbound HTTP call captured with the expected payload, a job record in the jobs table, a log line with a structured field.
+2. **Side-effect check** — proves the feature did the work it exists to do. The SPECIFIC observable effect: a row in a named table matching a predicate, an email in the local mail catcher (Mailpit/MailHog/smtp4dev), a file written to disk, a cache key with an expected value, an outbound HTTP call captured with the expected payload, a job record in the jobs table, a log line with a structured field.
 
 A status-200 response with zero rows in the table the feature was supposed to write to is a BROKEN FEATURE. Write the test accordingly.
 
@@ -158,7 +158,7 @@ test "$ROW_COUNT" -gt 0 || { echo "FAIL: expected row in new_table, got 0"; exit
 echo "PASS"
 ```
 
-Framework guides may provide specific side-effect assertion idioms (e.g. CakePHP `TableRegistry::getTableLocator()->get('NewTable')->find()->count()`, Laravel `NewModel::where(...)->count()`, plain PDO prepared statements, Mailpit HTTP API for captured mail, `redis-cli GET` for cache, etc.). Prefer the framework idiom when one is available.
+Framework guides may provide specific side-effect assertion idioms (e.g. CakePHP `TableRegistry::getTableLocator()->get('NewTable')->find()->count()`, Laravel `NewModel::where(...)->count()`, plain PDO prepared statements, local mail catcher HTTP API (Mailpit/MailHog) for captured mail, `redis-cli GET` for cache, etc.). Prefer the framework idiom when one is available.
 
 List every smoke test here with its entry-point check and its side-effect check clearly separated. One block per new route/action/listener/job.
 
@@ -247,16 +247,39 @@ The same smoke tests from section 3.1 are the single source of truth — the ope
 - [Unresolved verification issues with their severity]
 </output_format>
 
-<self_check>
-Before finalizing, verify:
-- Every file from the development summary is listed in the Files section.
-- Every migration has a corresponding rollback command.
-- The deployment steps are copy-paste ready — no placeholder text without [VERIFY] markers.
-- All unresolved verification issues are surfaced in Known Limitations.
-- The rollback plan actually reverses every deployment step.
-- Every new route, action, listener, or scheduled job has a smoke test in section 3.1 with BOTH an entry-point check AND a side-effect check.
-- No smoke test is status-code-only — each one asserts an observable side effect (row in DB, captured email, file on disk, cache key, outbound call payload, etc.).
-- Every smoke test was either EXECUTED and its exact output recorded in section 3.2 "Smoke test execution results", or marked `[UNEXECUTABLE]` with a one-sentence justification naming what was missing.
-- If any smoke test FAILED, delivery status is NOT READY and the failure is reported back to the development phase — do not finalize.
-- Every `[UNEXECUTABLE]` smoke test is also listed in section 7 so the operator runs it by hand post-deploy.
-</self_check>
+<completion_checklist>
+## Completion checklist
+
+### Contract
+
+- This phase is NOT COMPLETE until every box below has a recorded result.
+- In your phase output doc, emit a short "Completion checklist results"
+  section with one line per item below in the form:
+    `[x] <item number> — done. Evidence: <file:line / recorded output / section reference>`
+    `[N/A] <item number> — <one-sentence justification>`
+    `[ ] <item number> — not done. Reason: <why>`
+  Do not copy the full instruction text — just the result line.
+- Unchecked boxes (`[ ]`), `[N/A]` without justification, and `[x]`
+  without evidence all count as the phase being INCOMPLETE.
+- "It's a small change" and "unit tests cover it" are not valid `[N/A]`
+  justifications for integration/smoke items — those have their own
+  handling in the Testing and Delivery phases.
+- The verification phase (or the operator, for verification itself)
+  may refuse any phase output that has missing results, unjustified
+  N/A entries, or evidence-free checks.
+
+### Items
+
+1. The verification verdict is READY or READY WITH NOTES (IMPROVE-tier only). NOT READY blocks this phase.
+2. I ran `git status --short` and `git diff --stat` and confirmed the change set matches the verification report.
+3. Every smoke test has BOTH an entry-point check AND a side-effect check. Status-code-only smoke tests are a phase failure.
+4. I EXECUTED every smoke test against the local dev or staging environment, OR marked it `[UNEXECUTABLE]` with a one-sentence justification.
+5. I recorded the EXACT output (stdout, stderr, HTTP codes, DB query results, file listings) of every executed smoke test.
+6. Every executed smoke test returned PASS. Any failed smoke test returned the task to dev.
+7. I did NOT run `git commit` or `git push`.
+8. The commit message draft includes a "Smoke test results" block quoting the exact output.
+9. The delivery doc has a "Deployment steps" section listing every post-pull action.
+10. The delivery doc has a "Rollback plan" section covering every change.
+11. The delivery doc has a "What to watch after deployment" section with concrete monitoring signals AND a list of `[UNEXECUTABLE]` smoke tests for the operator to run.
+12. I wrote the delivery doc to the workspace path for this task.
+</completion_checklist>

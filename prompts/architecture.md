@@ -154,10 +154,39 @@ Match your output depth to the complexity of the feature:
 </output_scaling>
 </output_format>
 
-<self_check>
-Before finalizing, verify:
-- Every requirement from the requirements document is addressed somewhere in your architecture. If a requirement is intentionally deferred, state it explicitly in the Alternatives Considered section.
-- Every assumption you made is explicitly stated with reasoning.
-- The File Map accounts for all components in the design — no missing files.
-- The Rollback Plan actually undoes every change in the File Map.
-</self_check>
+<completion_checklist>
+## Completion checklist
+
+### Contract
+
+- This phase is NOT COMPLETE until every box below has a recorded result.
+- In your phase output doc, emit a short "Completion checklist results"
+  section with one line per item below in the form:
+    `[x] <item number> — done. Evidence: <file:line / recorded output / section reference>`
+    `[N/A] <item number> — <one-sentence justification>`
+    `[ ] <item number> — not done. Reason: <why>`
+  Do not copy the full instruction text — just the result line.
+- Unchecked boxes (`[ ]`), `[N/A]` without justification, and `[x]`
+  without evidence all count as the phase being INCOMPLETE.
+- "It's a small change" and "unit tests cover it" are not valid `[N/A]`
+  justifications for integration/smoke items — those have their own
+  handling in the Testing and Delivery phases.
+- The verification phase (or the operator, for verification itself)
+  may refuse any phase output that has missing results, unjustified
+  N/A entries, or evidence-free checks.
+
+### Items
+
+1. I read the requirements doc in full, not just the first section.
+2. I read the consensus synthesis in full (or noted "no consensus run" with justification).
+3. I read the framework guide for this project's framework in full.
+4. I read every source file the architecture will touch. File paths recorded in the doc.
+5. I traced every caller of every method the architecture will change. Caller list recorded in the doc.
+6. Every string constant, enum value, column name, or data key mentioned anywhere in the architecture doc either exists in the target codebase OR is explicitly listed as "being created in the dev phase."
+7. Every symbol (class, method, file path) mentioned in the architecture either exists in the target codebase OR is explicitly listed as "being created in the dev phase."
+8. For every new listener/subscriber/observer the architecture adds, I traced at least one dispatch site in the TARGET codebase (not only the vendor directory) and recorded its file:line.
+9. The architecture doc contains a File Map with one row per file change (create / modify / delete).
+10. The architecture doc has a "Rollback plan" section listing how to undo every File Map change.
+11. The architecture doc has an "Alternatives considered and rejected" section with at least two alternatives.
+12. I wrote the architecture doc to the workspace path for this task.
+</completion_checklist>

@@ -924,13 +924,37 @@ sudo systemctl reload php8.2-fpm
 ```
 
 ### Smoke tests
+
+Every smoke test must assert **both** that the route is reachable **and** that the route's expected side effect actually happened. Status-code-only tests can't distinguish "works" from "silently broken" — a 200 with an empty insert is still a bug.
+
+Generic template:
+
 ```bash
-BASE="http://myapp.local"
-curl -s -o /dev/null -w "%{http_code}\n" $BASE/                   # Home → 200
-curl -s -o /dev/null -w "%{http_code}\n" $BASE/login.php          # Login → 200
-curl -s -o /dev/null -w "%{http_code}\n" $BASE/transactions.php   # Protected → 302
-curl -s -o /dev/null -w "%{http_code}\n" $BASE/audit-log.php      # Admin → 302/403
+# Entry-point check — proves the route is reachable
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' https://APP_URL/new-route)
+test "$HTTP_CODE" = "200" || { echo "FAIL: route unreachable ($HTTP_CODE)"; exit 1; }
+
+# Side-effect check — proves the route did the expected work.
+# Example: if the route writes to a DB table, assert the row landed
+# Example: if the route sends an email, assert the mail catcher received it
+# Example: if the route updates cache, assert the cache key changed
+# Adapt this pattern to the framework's preferred DB/email/cache tooling.
 ```
+
+**Plain-PHP-specific shape (adapt, don't copy):** since there's no ORM or console runner, use `php -r` to bootstrap the project's DB helper and run a targeted query. Point it at whatever table/column the route was supposed to touch:
+
+```bash
+ROW_COUNT=$(php -r "
+require 'config/database.php';
+\$r = db()->query(\"SELECT COUNT(*) FROM widgets WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)\")->fetchColumn();
+echo (int)\$r;
+")
+test "$ROW_COUNT" -gt 0 || { echo "FAIL: expected row in widgets"; exit 1; }
+```
+
+For email side effects, use whichever mail catcher the project runs (Mailpit, MailHog, smtp4dev). Mailpit and MailHog expose a compatible HTTP API on port 8025 by default: `curl -s http://localhost:8025/api/v2/messages | jq '.total'` and assert the count increased. For cache, `redis-cli GET mykey` or `memcached-tool ... stats` against the expected key.
+
+> The delivery phase gates on smoke test execution — see `prompts/delivery.md` section 3.2. Smoke tests without side-effect checks are treated as zero tests and fail the phase.
 
 Check logs after deploy:
 ```bash
