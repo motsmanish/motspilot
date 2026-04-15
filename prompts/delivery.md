@@ -122,10 +122,9 @@ git pull origin BRANCH_NAME
 # [Test command from config]
 # Must match or improve on baseline from step 2
 
-# 8. Smoke test key URLs
-curl -s -o /dev/null -w "%{http_code}" https://APP_URL/          # Existing homepage → 200
-curl -s -o /dev/null -w "%{http_code}" https://APP_URL/login      # Existing login → 200
-curl -s -o /dev/null -w "%{http_code}" https://APP_URL/new-route  # New route → 200
+# 8. Re-run the smoke tests from section 3.1 against the deployed environment.
+#    These are the SAME tests the delivery phase executed pre-delivery (section 3.2).
+#    Any test marked [UNEXECUTABLE] in section 3.2 must be run by hand here.
 
 # 9. Check error logs
 # [Use the appropriate log tail command]
@@ -133,6 +132,59 @@ curl -s -o /dev/null -w "%{http_code}" https://APP_URL/new-route  # New route �
 
 # 10. Manually test the feature once
 # [describe the specific steps to verify the feature works in browser]
+```
+
+#### 3.1 Smoke tests (entry-point + side-effect)
+
+Every new route, controller action, event listener, queue consumer, or scheduled job introduced by this task MUST have a smoke test with BOTH of the following checks. A smoke test that asserts only an HTTP status code (or only a CLI exit code, or only a "message enqueued" log line) counts as ZERO tests — it is indistinguishable from a broken feature at the surface layer.
+
+1. **Entry-point check** — proves the code path is reachable. HTTP status, CLI exit code, queue-arrival confirmation, cron-fired timestamp. NOT sufficient on its own.
+2. **Side-effect check** — proves the feature did the work it exists to do. The SPECIFIC observable effect: a row in a named table matching a predicate, an email in MailHog/Mailpit, a file written to disk, a cache key with an expected value, an outbound HTTP call captured with the expected payload, a job record in the jobs table, a log line with a structured field.
+
+A status-200 response with zero rows in the table the feature was supposed to write to is a BROKEN FEATURE. Write the test accordingly.
+
+Generic template (adapt to the project's tooling — see the framework guide for idioms):
+
+```bash
+# Entry-point check — proves the route/handler is reachable
+HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' https://APP_URL/new-route)
+test "$HTTP_CODE" = "200" || { echo "FAIL: expected 200, got $HTTP_CODE"; exit 1; }
+
+# Side-effect check — proves the feature did the expected work
+# Adapt this query to your project's DB/email/cache tooling:
+ROW_COUNT=$(run_db_query "SELECT COUNT(*) FROM new_table WHERE <predicate>")
+test "$ROW_COUNT" -gt 0 || { echo "FAIL: expected row in new_table, got 0"; exit 1; }
+
+echo "PASS"
+```
+
+Framework guides may provide specific side-effect assertion idioms (e.g. CakePHP `TableRegistry::getTableLocator()->get('NewTable')->find()->count()`, Laravel `NewModel::where(...)->count()`, plain PDO prepared statements, Mailpit HTTP API for captured mail, `redis-cli GET` for cache, etc.). Prefer the framework idiom when one is available.
+
+List every smoke test here with its entry-point check and its side-effect check clearly separated. One block per new route/action/listener/job.
+
+#### 3.2 Smoke test execution (pre-delivery gate)
+
+**These smoke tests are executed by the DELIVERY PHASE, not by the human operator.** They are a pre-delivery gate, not post-deploy documentation.
+
+- Run every smoke test from section 3.1 against the local dev environment (or a staging environment if one exists) BEFORE marking delivery complete.
+- Record the EXACT output — stdout, stderr, HTTP codes, DB query result rows, file listings, captured emails — in a section immediately below titled **Smoke test execution results**. Paste the real output; do not paraphrase.
+- If any smoke test FAILS, delivery status is NOT READY. The task returns to the development phase with the failure details (which test, what was expected, what was observed). Do NOT mark the task complete on a failed smoke test.
+- If the environment genuinely does not permit execution (no dev server running, no database credentials available, no network access to the target service, no browser automation for a JS-driven flow), the delivery phase MAY record the smoke test with an `[UNEXECUTABLE]` tag and a one-sentence justification naming what was missing. `[UNEXECUTABLE]` is NOT "skipped" — the smoke test must still be fully written, and it must be listed in section 7 so the operator runs it post-deploy by hand.
+- Status-code-only smoke tests are a pipeline failure. A smoke test whose only assertion is `curl -w "%{http_code}"` (or equivalent) without a side-effect check counts as zero tests. The phase returns NOT READY until a real side-effect check is added.
+
+**Smoke test execution results** (fill in per test):
+
+```
+Test: [name / route / handler]
+Command: [exact command run]
+Exit status: [0 / non-zero / UNEXECUTABLE]
+stdout:
+  [paste]
+stderr:
+  [paste]
+Side-effect verification:
+  [paste DB query result, file listing, captured email, etc.]
+Result: PASS | FAIL | UNEXECUTABLE — [justification if unexecutable]
 ```
 
 ### 4. If Something Goes Wrong (rollback)
@@ -174,12 +226,18 @@ Refs #TICKET
 
 ### 7. What to Watch After Deployment
 
-For the next hour, keep an eye on:
+The same smoke tests from section 3.1 are the single source of truth — the operator re-runs them post-deploy. Do not list new checks here; reference section 3.1. In addition, for the next hour keep an eye on:
+- **Smoke tests from section 3.1** — re-run them against production. Every test tagged `[UNEXECUTABLE]` in section 3.2 must be run by hand now; list each one explicitly so nothing is missed.
 - **Error logs** — specify the exact error pattern or log line that would indicate this feature is broken (not just "any new errors")
-- **The feature itself** — specific URL to hit and expected behavior to confirm it works
 - **Database state** — if migrations ran, what confirms they applied correctly? (e.g., query to verify table/column exists)
 - **Existing features** — which specific features share tables/models with the new code? Test those explicitly.
 - **Performance** — any new queries that could be slow under load? Check query time if monitoring is available.
+
+**`[UNEXECUTABLE]` smoke tests to run by hand** (copy from section 3.2; empty if all were executed pre-delivery):
+
+```
+- [test name] — [one-sentence reason it could not be run pre-delivery]
+```
 
 ### 8. Known Limitations / Future Work
 
@@ -196,4 +254,9 @@ Before finalizing, verify:
 - The deployment steps are copy-paste ready — no placeholder text without [VERIFY] markers.
 - All unresolved verification issues are surfaced in Known Limitations.
 - The rollback plan actually reverses every deployment step.
+- Every new route, action, listener, or scheduled job has a smoke test in section 3.1 with BOTH an entry-point check AND a side-effect check.
+- No smoke test is status-code-only — each one asserts an observable side effect (row in DB, captured email, file on disk, cache key, outbound call payload, etc.).
+- Every smoke test was either EXECUTED and its exact output recorded in section 3.2 "Smoke test execution results", or marked `[UNEXECUTABLE]` with a one-sentence justification naming what was missing.
+- If any smoke test FAILED, delivery status is NOT READY and the failure is reported back to the development phase — do not finalize.
+- Every `[UNEXECUTABLE]` smoke test is also listed in section 7 so the operator runs it by hand post-deploy.
 </self_check>
