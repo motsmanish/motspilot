@@ -35,7 +35,17 @@ Tooling version caveats to check before adopting:
 
 ## Project Shape Detection
 
-Plain PHP projects split into two common shapes. Detect which one you're in before planning work.
+Plain PHP projects split into two common shapes. Detect which one you're in before planning work. Shape determines which subsections of this guide apply — security, DB, testing, and static-analysis content applies to both shapes unchanged, but routing, page structure, and webserver isolation differ.
+
+### Detecting your shape
+
+Use this heuristic at the start of the Architecture phase:
+
+- If `public/index.php` exists AND it routes through a dispatcher / front controller / middleware stack → **Shape B**.
+- If page files sit at the document root (or individually under `public/`) and each file is its own URL → **Shape A**.
+- If both patterns are present, the project is a hybrid — treat new work as whichever style the nearest existing page uses.
+
+Subsections in this guide tagged `**Shape A only**` or `**Shape B only**` apply only to that shape. Unlabelled content applies to both.
 
 ### Shape A: Page-file project (no routing)
 ```
@@ -101,12 +111,14 @@ nginx/site.conf      → CSP headers, PHP-FPM socket, fastcgi_params
 
 Plain PHP has no framework-imposed naming. Match what already exists. Common defaults:
 
-- **Page files** (Shape A) — lowercase dashes or underscores: `audit-log.php`, `transactions.php`
-- **Classes** (Shape B) — StudlyCaps, one class per file, file path mirrors namespace: `src/Auth/LoginService.php` → `App\Auth\LoginService`
 - **Helper functions** — camelCase: `getUserSetting()`, `buildPlaceholders()`, `formatMoney()`
 - **Constants** — SCREAMING_SNAKE: `MAX_UPLOAD_BYTES`, `DEFAULT_LOCALE`
 - **Database tables** — snake_case: `bank_accounts`, `user_settings`, `v_transactions`
 - **SQL columns** — snake_case: `user_id`, `status`, `created_at`
+
+> **Shape A only:** Page files use lowercase dashes or underscores: `audit-log.php`, `transactions.php`. Keep the convention consistent — mixing `audit-log.php` and `audit_log.php` in the same project is a smell.
+
+> **Shape B only:** Classes use StudlyCaps, one class per file, file path mirrors namespace: `src/Auth/LoginService.php` → `App\Auth\LoginService`.
 
 ---
 
@@ -133,7 +145,9 @@ If no Composer, the project uses `require_once` chains. Read the bootstrap file 
 
 ---
 
-## Page File Structure (Shape A)
+## Page File Structure
+
+> **Shape A only.** Shape B routes through a front controller — skip to the next section.
 
 Every page file follows the same shape:
 
@@ -177,7 +191,9 @@ pageHeader('Page Title', 'menu-key');
 
 ---
 
-## Front Controller + Router (Shape B)
+## Front Controller + Router
+
+> **Shape B only.** Shape A has no front controller — each page file is its own entry point.
 
 If the project has a router, `public/index.php` typically looks like:
 
@@ -370,6 +386,95 @@ Numeric IDs get `(int)` / `(float)`, dates format via `DateTime->format()`, ever
 - Never echo the uploaded filename without sanitizing.
 - Enforce size via nginx `client_max_body_size` + PHP `upload_max_filesize`.
 - Reject `.php`, `.phtml`, `.phar`, `.htaccess`.
+
+### Webserver isolation rules
+
+Only `public/` is reachable over HTTP. Everything else (`config/`, `includes/`, `src/`, `lib/`, `tests/`, `vendor/`, `.env`, `.git/`, and all dotfiles) must be physically **above** the document root OR explicitly denied at the webserver layer. Historically, most PHP app compromises start with a reachable `.env`, `.git/config`, `composer.json`, or `phpinfo.php` — not with code bugs. Treat the webserver config as part of the application's security perimeter.
+
+**Nginx drop-in** (include inside the `server { }` block, after `root` and `index`):
+
+```nginx
+# Block all dotfiles (.env, .git, .htaccess, .DS_Store, editor swap dirs)
+location ~ /\. {
+    deny all;
+    return 404;
+}
+
+# Belt-and-suspenders: explicit .env
+location ~ /\.env {
+    deny all;
+    return 404;
+}
+
+# Git metadata
+location ~ /\.git {
+    deny all;
+    return 404;
+}
+
+# Non-public code directories
+location ~* /(config|includes|src|lib|tests|vendor)/ {
+    deny all;
+    return 404;
+}
+
+# Sensitive file extensions (dumps, backups, swap files, configs, logs)
+location ~* \.(sql|bak|swp|log|ini|yml|yaml|toml|lock)$ {
+    deny all;
+    return 404;
+}
+
+# Package manifests at the root
+location = /composer.json      { deny all; return 404; }
+location = /composer.lock      { deny all; return 404; }
+location = /package.json       { deny all; return 404; }
+location = /package-lock.json  { deny all; return 404; }
+```
+
+Each block returns `404` rather than `403` — a 403 confirms the path exists. A 404 tells the scanner nothing.
+
+**Apache `.htaccess` equivalent** for shared-hosting deployments where the main server config isn't editable. Drop into the document root:
+
+```apache
+# Dotfiles (.env, .git, .htaccess, .DS_Store)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+<Files ".env">
+    Require all denied
+</Files>
+
+# Non-public code directories
+<DirectoryMatch "^.*/(config|includes|src|lib|tests|vendor)/">
+    Require all denied
+</DirectoryMatch>
+
+# Sensitive extensions and package manifests
+<FilesMatch "\.(sql|bak|swp|log|ini|yml|yaml|toml|lock)$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json)$">
+    Require all denied
+</FilesMatch>
+
+# Make denials indistinguishable from missing files
+ErrorDocument 403 /404.html
+```
+
+`mod_authz_core` must be enabled. On Apache 2.2 and earlier, `Require all denied` is replaced by `Order deny,allow` / `Deny from all`.
+
+> **Shape A only — MANDATORY.** If the project has no `public/` subdirectory (a flat-layout Shape A project where `index.php` and sibling page files live at the document root), the isolation rules above are **mandatory** because `config/`, `includes/`, `lib/`, etc. sit in the document root alongside servable pages. Either restructure to add a `public/` subdirectory and move page files under it, OR deny every non-page path at the webserver. There is no third option — a flat Shape A layout with no webserver denies is a public `.env` waiting to be scraped.
+
+**Quick self-test** after deploying — run from any machine that can reach the site:
+
+```bash
+curl -I https://APP_URL/.env
+curl -I https://APP_URL/.git/config
+curl -I https://APP_URL/composer.json
+curl -I https://APP_URL/config/database.php
+```
+
+Every response must be `HTTP/1.1 404 Not Found`. A `200` means the file is being served. A `403` means the path is denied but its existence is being leaked — fix the config to return 404 instead. There is no acceptable response other than 404.
 
 ### Nginx CSP
 `nginx/site.conf` should set a strict CSP. Check before adding any external resource:
@@ -712,57 +817,75 @@ PHP version matrix: test minimum supported + latest supported (e.g., 8.2 and 8.5
 
 ## Verification Checks
 
-Run these searches to catch common vulnerabilities. **Use the Grep tool** (not shell `grep`) for clean output.
+Run these searches to catch common vulnerabilities. **Use the Grep tool** (not shell `grep`) for clean output. Language-level findings (XSS, SQL injection, weak hashing, hardcoded secrets, dangerous functions) apply to both shapes; only the search paths differ.
+
+> **Shape A note:** if page files sit at the document root rather than under `public/`, substitute `./` or the project root for any `public/` path below, and add `*.php` at the top level to the glob. Shape B checks assume the `public/` convention holds.
 
 ```bash
 # Unescaped output (XSS)
 grep -rn "<?= \$" public/ | grep -v "e("
 # Every result is a potential XSS hole. Exceptions: (int), (float) casts.
+# Shape A: also grep the project root, since page files may live there.
 
 # Direct superglobals bypassing helpers
 grep -rn "\$_POST\|\$_GET\|\$_REQUEST" public/
 # Acceptable ONLY at the top of page files. Flag anything in includes/, src/, lib/.
+# Shape A: grep the project root too.
 
 # Raw PDO instantiation bypassing db()
 grep -rn "new PDO(" .
-# Should have ZERO matches outside config/database.php.
+# Should have ZERO matches outside config/database.php. Both shapes.
 
 # String interpolation in SQL
 grep -rnE "query\(.*\\\$|exec\(.*\\\$|prepare\(.*\\\$.*\\\$" .
-# Every result is potential SQL injection.
+# Every result is potential SQL injection. Both shapes.
 
 # Missing CSRF on POST handlers
 grep -rn "REQUEST_METHOD.*POST" public/
 # Cross-reference each file to verify verifyCsrf() is called.
+# Shape A: grep the project root; POST handlers may sit in top-level .php files.
+# Shape B: also grep src/ for controller classes handling POST.
 
-# Missing auth check at top of page (Shape A)
-for f in public/*.php; do
+# Missing auth check at top of page
+# Shape A (page files at doc root or in public/):
+for f in public/*.php ./*.php; do
+    [ -f "$f" ] || continue
     head -5 "$f" | grep -qE "requireAuth|requireAdmin|install|login" || echo "UNPROTECTED: $f"
 done
+# Shape B: auth is middleware-based — grep src/ for route definitions and verify
+# each non-public route is inside an auth-guarded group. There's no per-file head check.
 
 # Weak password hashing
 grep -rn "md5\|sha1\b" includes/ public/ src/
-# Should have ZERO matches on password handling. md5/sha1 OK only for dedup keys.
+# Should have ZERO matches on password handling. md5/sha1 OK only for dedup keys. Both shapes.
 
 # Session started without hardening
 grep -rn "session_start" config/ includes/ src/
-# Must be preceded by cookie_httponly, cookie_samesite, cookie_secure.
+# Must be preceded by cookie_httponly, cookie_samesite, cookie_secure. Both shapes.
 
 # External CDN (violates CSP)
 grep -rn "https://cdn\|https://fonts\|unpkg\|jsdelivr" public/
 # Should have ZERO matches. All assets vendored.
+# Shape A: extend to the project root and any templates/ directory.
 
 # Hardcoded secrets
 grep -rnE "password\s*=\s*['\"][^'\"]{8,}|api[_-]?key\s*=\s*['\"]" --include="*.php" .
-# Every match is suspect. Secrets go in .env.
+# Every match is suspect. Secrets go in .env. Both shapes.
 
 # Dangerous functions
 grep -rnE "\beval\(|\bsystem\(|\bexec\(|\bshell_exec\(|\bpassthru\(" .
-# Every match is severe risk. Should be ZERO.
+# Every match is severe risk. Should be ZERO. Both shapes.
 
 # GET state mutation
 grep -rn "REQUEST_METHOD.*GET" public/ src/ | xargs -I{} grep -l "INSERT\|UPDATE\|DELETE" {}
 # Any match violates CSRF policy. State changes must require POST.
+# Shape A: include the project root in the first grep.
+
+# Webserver isolation (post-deploy — see "Webserver isolation rules")
+curl -sI https://APP_URL/.env         | head -1   # expect HTTP/1.1 404
+curl -sI https://APP_URL/.git/config  | head -1   # expect HTTP/1.1 404
+curl -sI https://APP_URL/composer.json| head -1   # expect HTTP/1.1 404
+# Any 200 is a critical finding. Any 403 leaks existence — fix to 404.
 ```
 
 ---
