@@ -192,6 +192,24 @@ If a subagent needs more context about a previous phase, it can read the artifac
 
 ---
 
+## Completion Checklist Results in Phase Outputs
+
+Every phase prompt now ends with a structured `<completion_checklist>` block containing 12 numbered verifiable items (replacing the older prose `<self_check>`). The phase subagent must emit results — not a verbatim copy of the instructions — in its phase output doc, using one of these forms per item:
+
+- `[x] done — <evidence>`
+- `[N/A] — <justification>`
+- `[ ] not done — <reason>`
+
+When you (the orchestrator) review a completed phase artifact:
+
+- **Unchecked items count as the phase being incomplete** — re-run the phase with feedback if any item is missing.
+- **Items marked `[x]` without evidence count as incomplete** — the model must point at a file, command, or quoted code, not just claim done.
+- **`[N/A]` without justification counts as incomplete** — every N/A needs one sentence saying why the item does not apply.
+
+If the completion checklist is incomplete, do not advance to the next phase — re-run with feedback indicating which items need evidence or justification.
+
+---
+
 ## Phase Definitions
 
 ### Phase 2: Architecture
@@ -287,9 +305,23 @@ For each new route/action, test:
 - CSRF missing returns 403
 - Another user's data is rejected (IDOR)
 
+Integration-vs-unit hard rule:
+For any runtime path that runs inside framework plumbing (events, middleware,
+observers, lifecycle hooks, schedulers, queues), at least one test MUST exercise
+the real dispatch mechanism. Reflection-based unit tests that directly invoke
+handler methods are NOT sufficient. Driver-gated branches and SQL-string-generation
+assertions are acceptable patterns for surviving test-DB-vs-prod-DB limitations.
+
 Actually write the test files to the codebase. Use the Write and Edit tools.
 
-Produce a testing summary listing all test files created/modified and strategy rationale.
+Produce a testing summary listing all test files created/modified and strategy
+rationale. The summary MUST include a runtime-path classification table
+labeling each runtime path as (a) pure-logic, (b) plumbing-dependent, or
+(c) external-I/O — so verification can cross-check coverage.
+
+The testing prompt's <completion_checklist> requires the subagent to emit
+12 numbered results in the output doc as `[x] done — evidence`,
+`[N/A] — justification`, or `[ ] not done — reason`.
 
 Write your summary to:
 motspilot/.motspilot/workspace/tasks/<task-name>/04_testing.md
@@ -319,7 +351,36 @@ General checks (apply to all frameworks):
 - IDOR (user can access another user's data)
 - Broken existing tests
 
-Produce a verification report: READY or NOT READY, with issues by severity.
+Severity taxonomy: CRITICAL / MUST FIX (untested seam) / SHOULD FIX / IMPROVE.
+- MUST FIX (untested seam) is non-downgradeable. Apply to any runtime code path
+  that exists in the shipped change but is not exercised by any test (unit,
+  integration, or smoke). It cannot be deferred as a follow-up note.
+- Cross-check the testing phase's runtime-path classification table against
+  what was actually built. Plumbing-dependent paths require an integration test
+  that exercises the real dispatch mechanism — reflection-based handler tests
+  do not satisfy this.
+
+Run the four mechanical consistency checks across artifacts and source:
+1. Data-value consistency — string constants, enum values, column values, and
+   config keys agree across all task docs and the source code.
+2. Symbol-name consistency — constant, method, class, and file-path names match
+   across docs and code.
+3. Timezone consistency — for any time-bucketed column, the write-side and
+   read-side must agree explicitly on the timezone.
+4. Event-name consistency — for pub/sub systems, every listener must have at
+   least one matching dispatch site in the target codebase (NOT only in
+   vendor/). Flag dangling listeners as MUST FIX (untested seam).
+
+Verdicts:
+- READY               — no CRITICAL, MUST FIX, or SHOULD FIX issues
+- READY WITH NOTES    — restricted to IMPROVE-tier notes ONLY (not CRITICAL,
+                        not MUST FIX, not SHOULD FIX)
+- NOT READY           — any CRITICAL, MUST FIX, or SHOULD FIX
+
+Produce a verification report listing issues grouped by severity. The
+verification prompt's <completion_checklist> requires the subagent to emit
+12 numbered results in the output doc as `[x] done — evidence`,
+`[N/A] — justification`, or `[ ] not done — reason`.
 
 Write your report to:
 motspilot/.motspilot/workspace/tasks/<task-name>/05_verification.md
@@ -339,6 +400,18 @@ Apply the delivery thinking framework. Every deployment step must have an undo.
 If a framework guide is provided above, use its specific deployment commands,
 cache clearing steps, and rollback procedures.
 
+Smoke-test execution gate (delivery prompt section 3.2):
+- Smoke tests are NOT a post-deploy operator checklist. The delivery phase
+  EXECUTES every smoke test before marking the task complete.
+- Each smoke test requires BOTH:
+  (a) an entry-point check — HTTP status, CLI exit code, queue arrival
+  (b) a side-effect check — DB row, mail catcher (Mailpit/MailHog/smtp4dev)
+      message, file written, cache key updated, external API called
+- Status-code-only tests count as zero tests.
+- For any smoke test that cannot be executed in the current environment, tag
+  it [UNEXECUTABLE] with a one-sentence justification and surface it in the
+  delivery doc for the operator to run post-deploy.
+
 Produce a delivery document containing:
 1. What changed (1-2 sentence summary)
 2. Files changed (new, modified, deleted)
@@ -346,8 +419,14 @@ Produce a delivery document containing:
 4. Rollback steps (exact commands)
 5. Configuration changes (or "none")
 6. Git commit message (conventional format)
-7. What to watch after deployment
-8. Known limitations / deferred work
+7. Smoke-test execution results (each with entry-point + side-effect evidence,
+   or [UNEXECUTABLE] with justification)
+8. What to watch after deployment
+9. Known limitations / deferred work
+
+The delivery prompt's <completion_checklist> requires the subagent to emit
+12 numbered results in the output doc as `[x] done — evidence`,
+`[N/A] — justification`, or `[ ] not done — reason`.
 
 Write your delivery document to:
 motspilot/.motspilot/workspace/tasks/<task-name>/06_delivery.md
@@ -430,6 +509,11 @@ When all phases are approved:
 ## Error Handling
 
 - **Phase produces empty output**: Tell the user, offer to re-run with additional context
+- **Phase output has unchecked completion-checklist items**: Re-run the phase with feedback indicating which numbered items need evidence or justification.
 - **Verification returns NOT READY**: Show the issues, ask: re-run development? fix manually? skip?
+- **Verification returns READY WITH NOTES**: Verify the notes are IMPROVE-tier only. If any CRITICAL, MUST FIX (untested seam), or SHOULD FIX issue is present in the report, treat as NOT READY regardless of the verdict label.
+- **Verification flags MUST FIX (untested seam)**: This tier is non-downgradeable. Do NOT proceed to delivery — re-run development or testing to add the missing test coverage. Do not record it as a follow-up note.
+- **Delivery smoke test marked [UNEXECUTABLE]**: Acceptable if the justification is environmental (e.g., missing prod credentials, no mail catcher in CI). Surface these in the completion summary so the operator runs them post-deploy.
+- **Delivery smoke test status-code-only (no side-effect check)**: Reject. Re-run delivery with feedback that smoke tests must include both an entry-point check and a side-effect check.
 - **Archive command fails**: Tell the user to run `./motspilot.sh archive --task=<name>` manually
 - **Requirements missing**: Ask user to run `./motspilot.sh go --task=<name> "description"` first

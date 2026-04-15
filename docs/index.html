@@ -827,7 +827,7 @@
         <!-- ============ PHASES ============ -->
         <div class="tab-pane fade" id="phases" role="tabpanel">
 
-            <p class="text-muted mb-4">Before the phases begin, a <strong>multi-model consensus</strong> step queries 3 AIs in parallel and synthesizes a unified starting context. Each phase then uses a <strong>thinking framework</strong> (not a checklist) and receives the <strong>framework guide</strong> for your project's framework. Prompt engineering techniques applied across all phases: XML-tagged prompt assembly, investigate-before-acting guards, anti-overengineering clauses, phase-specific self-checks, few-shot examples, quote-grounded findings, and constants discipline (no magic values for domain states).</p>
+            <p class="text-muted mb-4">Before the phases begin, a <strong>multi-model consensus</strong> step queries 3 AIs in parallel and synthesizes a unified starting context. Each phase then uses a <strong>thinking framework</strong> (not a checklist) and receives the <strong>framework guide</strong> for your project's framework. Prompt engineering techniques applied across all phases: XML-tagged prompt assembly, investigate-before-acting guards, anti-overengineering clauses, structured 12-item <code>&lt;completion_checklist&gt;</code> blocks (replacing the older <code>&lt;self_check&gt;</code>), few-shot examples, quote-grounded findings, and constants discipline (no magic values for domain states). Verification adds the <strong>MUST FIX (untested seam)</strong> non-downgradeable severity tier and four mechanical consistency checks; delivery executes smoke tests with an entry-point + side-effect requirement before marking the task complete.</p>
 
             <!-- Phase 1 -->
             <div class="card phase-card p-4 mb-4">
@@ -880,7 +880,7 @@
                             <h5 class="mb-1">Architecture <small class="text-muted fw-normal">&mdash; Design only</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Includes <code>&lt;investigate_before_designing&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, assumption-gating, and <code>&lt;self_check&gt;</code> verification before finalizing.</p>
+                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Includes <code>&lt;investigate_before_designing&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, assumption-gating, and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output as <code>[x] done &mdash; evidence</code> / <code>[N/A] &mdash; justification</code> / <code>[ ] not done &mdash; reason</code>.</p>
                         <div class="accordion" id="archAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -946,7 +946,7 @@
                             <h5 class="mb-1">Development <small class="text-muted fw-normal">&mdash; Build in tiny loops</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Includes <code>&lt;investigate_before_coding&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, follow-through policy, and <code>&lt;self_check&gt;</code> verification.</p>
+                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Includes <code>&lt;investigate_before_coding&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, follow-through policy, and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output as <code>[x] done &mdash; evidence</code> / <code>[N/A] &mdash; justification</code> / <code>[ ] not done &mdash; reason</code>.</p>
                         <div class="accordion" id="devAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -996,7 +996,7 @@
                             <h5 class="mb-1">Testing <small class="text-muted fw-normal">&mdash; Security-first</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Includes <code>&lt;investigate_before_testing&gt;</code> guard, few-shot <code>&lt;example&gt;</code> blocks for test naming, and <code>&lt;self_check&gt;</code> verification. Falls back to manual test checklists when no test framework exists.</p>
+                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Includes <code>&lt;investigate_before_testing&gt;</code> guard, few-shot <code>&lt;example&gt;</code> blocks for test naming, and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output. Falls back to manual test checklists when no test framework exists. <strong>Integration-vs-unit hard rule:</strong> for any runtime path that runs inside framework plumbing (events, middleware, observers, lifecycle hooks, schedulers, queues), at least one test must exercise the real dispatch mechanism &mdash; reflection-based unit tests directly invoking handler methods are not sufficient. The testing summary must include a runtime-path classification table (pure-logic / plumbing-dependent / external-I/O) so verification can cross-check coverage.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Test Priority Order</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -1021,7 +1021,7 @@
                             <h5 class="mb-1">Verification <small class="text-muted fw-normal">&mdash; Skeptical senior reviewer</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Includes <code>&lt;investigate_before_judging&gt;</code> guard requiring quoted code for every finding. Completeness contract: must read every file. Requirements coverage matrix (MET/NOT MET) per requirement. <code>&lt;self_check&gt;</code> verification.</p>
+                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Includes <code>&lt;investigate_before_judging&gt;</code> guard requiring quoted code for every finding. Completeness contract: must read every file. Requirements coverage matrix (MET/NOT MET) per requirement. 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Verification Checklist</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -1032,7 +1032,25 @@
                                 <li>Correct framework API for the project's version?</li>
                             </ol>
                         </div>
-                        <small class="text-muted d-block mt-2">Artifact: <code>05_verification.md</code> &mdash; READY or NOT READY</small>
+                        <div class="card p-3 mt-3" style="background: var(--surface-2);">
+                            <strong class="mb-2 d-block" style="font-size: 0.85rem;">Severity Tiers</strong>
+                            <ul class="text-muted mb-0" style="font-size: 0.85rem;">
+                                <li><strong>CRITICAL</strong> &mdash; security or correctness breakage; blocks delivery.</li>
+                                <li><strong>MUST FIX (untested seam)</strong> &mdash; <em>non-downgradeable.</em> Any runtime code path that exists in the shipped change but is not exercised by any test (unit, integration, or smoke). Cannot be deferred as a follow-up note.</li>
+                                <li><strong>SHOULD FIX</strong> &mdash; quality or maintainability issue that blocks delivery but is not security-critical.</li>
+                                <li><strong>IMPROVE</strong> &mdash; nice-to-have. Only IMPROVE-tier issues are allowed under the <code>READY WITH NOTES</code> verdict.</li>
+                            </ul>
+                        </div>
+                        <div class="card p-3 mt-3" style="background: var(--surface-2);">
+                            <strong class="mb-2 d-block" style="font-size: 0.85rem;">Four Mechanical Consistency Checks</strong>
+                            <ol class="text-muted mb-0" style="font-size: 0.85rem;">
+                                <li><strong>Data-value consistency</strong> &mdash; string constants, enum values, column values, and config keys agree across all task docs and source code.</li>
+                                <li><strong>Symbol-name consistency</strong> &mdash; constant, method, class, and file-path names match across docs and code.</li>
+                                <li><strong>Timezone consistency</strong> &mdash; for any time-bucketed column, write-side and read-side must agree explicitly on the timezone.</li>
+                                <li><strong>Event-name consistency</strong> &mdash; every listener has at least one matching dispatch site in the target codebase, not only in <code>vendor/</code>. Dangling listeners flag MUST FIX (untested seam).</li>
+                            </ol>
+                        </div>
+                        <small class="text-muted d-block mt-2">Artifact: <code>05_verification.md</code> &mdash; READY / READY WITH NOTES (IMPROVE-tier only) / NOT READY</small>
                     </div>
                 </div>
             </div>
@@ -1046,7 +1064,16 @@
                             <h5 class="mb-1">Delivery <small class="text-muted fw-normal">&mdash; Safe and reversible</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Includes <code>&lt;investigate_before_documenting&gt;</code> guard and <code>&lt;self_check&gt;</code> verification. Surfaces unresolved verification issues with [VERIFY] markers.</p>
+                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Includes <code>&lt;investigate_before_documenting&gt;</code> guard and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output. Surfaces unresolved verification issues with [VERIFY] markers.</p>
+                        <div class="card p-3 mb-3" style="background: var(--surface-2);">
+                            <strong class="mb-2 d-block" style="font-size: 0.85rem;">Smoke-Test Execution Gate (delivery section 3.2)</strong>
+                            <p class="text-muted mb-2" style="font-size: 0.85rem;">Smoke tests are <strong>not</strong> a post-deploy operator checklist. The delivery phase <strong>executes</strong> every smoke test before marking the task complete. Each smoke test requires <strong>both</strong>:</p>
+                            <ul class="text-muted mb-2" style="font-size: 0.85rem;">
+                                <li><strong>Entry-point check</strong> &mdash; HTTP status, CLI exit code, queue arrival</li>
+                                <li><strong>Side-effect check</strong> &mdash; DB row, mail catcher (Mailpit/MailHog/smtp4dev) message, file written, cache key updated, external API called</li>
+                            </ul>
+                            <p class="text-muted mb-0" style="font-size: 0.85rem;">Status-code-only tests count as zero tests. Smoke tests that cannot run in the environment are tagged <code>[UNEXECUTABLE]</code> with a one-sentence justification and surfaced for the operator to run post-deploy.</p>
+                        </div>
                         <div class="row g-2" style="font-size: 0.85rem;">
                             <div class="col-md-6">
                                 <ul class="text-muted mb-0">
@@ -1296,14 +1323,25 @@
 
             <!-- Available -->
             <h5 class="mb-3">Available Guides</h5>
-            <div class="card p-4 mb-5">
+            <div class="card p-4 mb-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="principle-icon" style="background: rgba(63,185,80,0.15); color: #3fb950;">
                         <i class="bi bi-check-lg"></i>
                     </div>
                     <div>
                         <h6 class="mb-0">cakephp.md</h6>
-                        <small class="text-muted">CakePHP 4.x &mdash; Version reference, naming conventions, migration/entity/table/service/controller/template/route/test patterns, verification checks, deployment commands</small>
+                        <small class="text-muted">CakePHP 4.x &mdash; Version reference, naming conventions, migration/entity/table/service/controller/template/route/test patterns, verification checks, deployment commands. Smoke-test templates assert side effects (mail catcher, DB rows, cache keys) and point at <code>prompts/delivery.md</code> section 3.2 for the execution gate.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card p-4 mb-5">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="principle-icon" style="background: rgba(63,185,80,0.15); color: #3fb950;">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">plain-php.md</h6>
+                        <small class="text-muted">Plain PHP (no framework) &mdash; structured around two callouts: <strong>Shape A</strong> (page-file) and <strong>Shape B</strong> (PDS-skeleton). Includes webserver isolation rules and side-effect-asserting smoke-test templates that point at <code>prompts/delivery.md</code> section 3.2 for the execution gate.</small>
                     </div>
                 </div>
             </div>
@@ -1517,7 +1555,7 @@
                     <span class="comment">&lt;motspilot_phase name="[phase name]"&gt;</span><br><br>
                     <span class="comment">&lt;thinking_framework&gt;</span><br>
                     <span style="color: var(--accent-light);">[Full contents of prompts/&lt;phase&gt;.md]</span><br>
-                    <span style="color: #6a737d;">Includes &lt;investigate_before_*&gt;, &lt;anti_overengineering&gt;, &lt;self_check&gt;, &lt;example&gt; blocks</span><br>
+                    <span style="color: #6a737d;">Includes &lt;investigate_before_*&gt;, &lt;anti_overengineering&gt;, &lt;completion_checklist&gt; (12 items), &lt;example&gt; blocks</span><br>
                     <span class="comment">&lt;/thinking_framework&gt;</span><br><br>
                     <span class="comment">&lt;framework_guide&gt;</span><br>
                     <span style="color: var(--accent-light);">[Full contents of prompts/frameworks/&lt;FRAMEWORK&gt;.md]</span><br>

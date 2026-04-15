@@ -101,8 +101,9 @@ motspilot works with any framework. Framework-specific knowledge lives in `promp
 | Guide | Framework | Status |
 |-------|-----------|--------|
 | `cakephp.md` | CakePHP 4.x | Shipped |
+| `plain-php.md` | Plain PHP (no framework) | Shipped |
 
-**CakePHP is the only framework guide that currently exists.** Without a framework guide, the pipeline still works — it uses framework-agnostic reasoning and discovers patterns from your codebase. Framework guides make the AI's output more precise by providing version-specific API patterns, verification checks, and deployment commands.
+Both shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase) and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules. Without a framework guide, the pipeline still works — it uses framework-agnostic reasoning and discovers patterns from your codebase. Framework guides make the AI's output more precise by providing version-specific API patterns, verification checks, and deployment commands.
 
 **Community contributions welcome.** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write a framework guide. Guides for Laravel, Django, Rails, Next.js, Express, and others would be valuable additions.
 
@@ -196,19 +197,23 @@ Requirements → Architecture → Development → Testing → Verification → D
 | 3 | Development | Implements the feature — schema, models, controllers, views | Yes |
 | 4 | Testing | Writes comprehensive tests (security-first) | Yes |
 | 5 | Verification | Senior code review — security, correctness, framework patterns | No |
-| 6 | Delivery | Deployment steps, rollback plan, git commit message | No |
+| 6 | Delivery | Executes smoke tests, deployment steps, rollback plan, git commit message | No |
 
 Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Prompt engineering techniques applied across all phases:
 
 - **XML-tagged prompt assembly** — Orchestrator wraps each section (`<thinking_framework>`, `<requirements>`, `<previous_phases>`, etc.) in XML tags for unambiguous parsing
 - **Investigate-before-acting guards** — `<investigate_before_designing>`, `<investigate_before_coding>`, etc. prevent speculation about unread code
 - **Anti-overengineering clauses** — Explicit `<anti_overengineering>` blocks prevent scope creep and premature abstraction
-- **Phase-specific self-checks** — Every phase ends with `<self_check>` verification criteria before finalizing output
+- **Phase-specific completion checklists** — Every phase ends with a structured 12-item `<completion_checklist>` block (replacing the older prose `<self_check>`). Each subagent emits results in its phase output as `[x] done — evidence`, `[N/A] — justification`, or `[ ] not done — reason`. Unchecked items, missing evidence, and unjustified N/A count as the phase being incomplete.
 - **Few-shot examples** — `<example>` blocks demonstrate good vs bad output patterns
 - **Completeness contracts** — Verification must read every file; development must complete every planned file
 - **Assumption-gating** — Ambiguous requirements must be stated explicitly, never silently filled in
 - **Quote-grounded findings** — Verification must quote specific code lines before making judgments
 - **Constants discipline** — Development greps for existing constants before coding domain values (statuses, tiers, roles); Verification flags duplicated or missing constants as SHOULD FIX
+- **MUST FIX (untested seam) severity tier** — Verification uses **CRITICAL / MUST FIX (untested seam) / SHOULD FIX / IMPROVE**. The MUST FIX tier is non-downgradeable and applies to any runtime code path that exists in the shipped change but is not exercised by any test. It cannot be deferred as a follow-up note. `READY WITH NOTES` is restricted to IMPROVE-tier notes only.
+- **Verification consistency checks** — Verification runs four mechanical grep-level checks across artifacts and source: data-value consistency (constants/enums/columns/config keys agree across docs and code), symbol-name consistency, timezone consistency for time-bucketed columns (write-side and read-side must agree), and event-name consistency for pub/sub (every listener has a matching dispatch site in the target codebase, not only in `vendor/`).
+- **Smoke-test execution gate (Delivery)** — The delivery phase **executes** every smoke test before marking the task complete. Each smoke test requires BOTH an entry-point check (HTTP status, CLI exit, queue arrival) AND a side-effect check (DB row, mail catcher message, file written, cache key updated, external API called). Status-code-only tests count as zero tests. Tests that cannot run in the environment are tagged `[UNEXECUTABLE]` with a one-sentence justification and surfaced for the operator.
+- **Integration-vs-unit hard rule (Testing)** — For any runtime path that runs inside framework plumbing (events, middleware, observers, lifecycle hooks, schedulers, queues), at least one test must exercise the real dispatch mechanism. Reflection-based unit tests directly invoking handler methods are not sufficient. The testing summary must include a runtime-path classification table (pure-logic / plumbing-dependent / external-I/O) so verification can cross-check coverage.
 
 Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one exists for your framework.
 
