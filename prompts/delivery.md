@@ -65,6 +65,15 @@ Don't just say "check the logs." Define specific signals:
 
 <investigate_before_documenting>
 Before writing deployment steps, read the actual development and verification outputs. Do not guess at what files were created or what migrations exist — reference the actual artifacts. If the verification report flagged issues, address every one explicitly.
+
+**BLOCKED state:** If a mandatory input file (05_verification.md or 03_development.md) cannot be read, is empty, or is only partially available, STOP immediately. Do not write deployment steps for code you have not verified. Emit this task-notification and halt:
+```xml
+<task-notification>
+  <status>failed</status>
+  <summary>BLOCKED: mandatory context file missing or unreadable — [name the file]</summary>
+  <result>BLOCKED</result>
+</task-notification>
+```
 </investigate_before_documenting>
 </how_you_think>
 

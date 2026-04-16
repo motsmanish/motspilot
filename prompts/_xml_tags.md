@@ -73,6 +73,7 @@ tags from this list to prevent drift and typos.
 | `<before_fail>` | Validation checklist before issuing NOT READY |
 | `<confidence_scoring>` | 1–10 confidence score per finding; <7 becomes NOTE |
 | `<hard_exclusions>` | Dated list of known false-positive patterns to skip |
+| `<blocked_by_scope>` | Protocol for out-of-scope findings (record, don't patch, name owner) |
 | `<mandatory_evidence>` | Every finding must quote file:line + code |
 | `<consistency_checks>` | 4 mechanical grep-level checks (data-value, symbol-name, timezone, event-name) |
 | `<verify_visual_output>` | Visual rendering checks for emails/PDFs/reports |

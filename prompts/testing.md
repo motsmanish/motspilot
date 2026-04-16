@@ -52,6 +52,15 @@ If there are pre-existing failures, write them down. They're not your problem, b
 <understand_existing_tests>
 <investigate_before_testing>
 Never assume how tests are structured. Read existing test files before writing new ones. Match the exact setup patterns, fixture conventions, and assertion styles already in use. If the project has no tests, check the development summary to determine whether a manual test checklist is more appropriate.
+
+**BLOCKED state:** If a mandatory input file (03_development.md or the architecture File Map) cannot be read, is empty, or is only partially available, STOP immediately. Do not guess what code was written. Emit this task-notification and halt:
+```xml
+<task-notification>
+  <status>failed</status>
+  <summary>BLOCKED: mandatory context file missing or unreadable — [name the file]</summary>
+  <result>BLOCKED</result>
+</task-notification>
+```
 </investigate_before_testing>
 
 Don't create a parallel test universe. Fit into what's already there.

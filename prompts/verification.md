@@ -32,6 +32,15 @@ You MUST read every file listed as NEW or MODIFIED in the development summary. D
 
 <investigate_before_judging>
 Never make claims about code quality without reading the actual code. For every issue you report, quote the specific line(s) that demonstrate it. Do not rely on the development summary's descriptions — open each file and verify for yourself. Ground every finding in actual code you have read.
+
+**BLOCKED state:** If a mandatory input file (03_development.md, 04_testing.md, or any source file listed as NEW/MODIFIED in the development summary) cannot be read, STOP immediately. Do not review code you have not opened. Emit this task-notification and halt:
+```xml
+<task-notification>
+  <status>failed</status>
+  <summary>BLOCKED: mandatory context file missing or unreadable — [name the file]</summary>
+  <result>BLOCKED</result>
+</task-notification>
+```
 </investigate_before_judging>
 
 Don't scan test results and stamp "approved." Actually open each file and read it. Ask yourself at every line:
@@ -246,6 +255,17 @@ DO NOT flag the following patterns — they are known false positives:
 - Missing docblocks on methods in files not modified in this task (2026-04-16)
 Each exclusion is dated. Review and prune entries older than 6 months.
 </hard_exclusions>
+
+<blocked_by_scope>
+When you find a defect that can only be fixed outside the current task's file scope:
+- DO NOT patch it.
+- Record it as **BLOCKED_BY_SCOPE** with severity level.
+- Name the external file(s) that own the fix.
+- Explain the dependency in one sentence.
+- Name the likely owning task or follow-up if known.
+
+BLOCKED_BY_SCOPE findings do not count against the READY verdict for this task — they are informational for the operator. But they MUST be listed in the verification report so nothing is silently dropped.
+</blocked_by_scope>
 
 <mandatory_evidence>
 Every finding MUST be followed by quoted evidence. Findings without evidence are invalid and will be rejected by the operator.

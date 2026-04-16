@@ -70,6 +70,15 @@ At most one BLOCKER or sub-task may be marked [WIP] in your work at a time. Comp
 <before_writing_code>
 <investigate_before_coding>
 Never speculate about code you have not opened. Before modifying any file, read it first. Before creating a new file, search the codebase for existing similar implementations and match their approach. Do not assume anything about how the codebase works — discover it by reading actual files.
+
+**BLOCKED state:** If a mandatory input file (02_architecture.md or a framework guide when required) cannot be read, is empty, or is only partially available, STOP immediately. Do not infer architecture decisions from memory. Emit this task-notification and halt:
+```xml
+<task-notification>
+  <status>failed</status>
+  <summary>BLOCKED: mandatory context file missing or unreadable — [name the file]</summary>
+  <result>BLOCKED</result>
+</task-notification>
+```
 </investigate_before_coding>
 
 1. **Read the architecture document completely.** It's your blueprint.

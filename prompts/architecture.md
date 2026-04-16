@@ -51,6 +51,15 @@ Never speculate about code you have not opened. Before proposing any file change
 2. Grep for any existing constants, class names, or table names you intend to reuse.
 3. Quote the relevant line(s) in your <analysis> block as evidence.
 Proposals without quoted evidence are incomplete. Do not assume anything about the codebase structure — discover it by reading actual files.
+
+**BLOCKED state:** If a mandatory input file (01_requirements.md, 00_consensus.md, or a framework guide when `framework_guide: required`) cannot be read, is empty, or is only partially available, STOP immediately. Do not infer project conventions from memory. Emit this task-notification and halt:
+```xml
+<task-notification>
+  <status>failed</status>
+  <summary>BLOCKED: mandatory context file missing or unreadable — [name the file]</summary>
+  <result>BLOCKED</result>
+</task-notification>
+```
 </investigate_before_designing>
 
 Look for these landmarks (they vary by framework, but every project has them):
