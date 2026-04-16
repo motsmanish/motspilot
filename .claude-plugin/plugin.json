@@ -14,15 +14,21 @@
   ],
   "userConfig": {
     "ANTHROPIC_API_KEY": {
+      "title": "Anthropic API Key",
       "description": "Anthropic API key for consensus phase (Claude model). Optional — consensus is skipped if missing.",
+      "type": "string",
       "sensitive": true
     },
     "OPENAI_API_KEY": {
+      "title": "OpenAI API Key",
       "description": "OpenAI API key for consensus phase (GPT-4o model). Optional — consensus is skipped if missing.",
+      "type": "string",
       "sensitive": true
     },
     "GEMINI_API_KEY": {
+      "title": "Google Gemini API Key",
       "description": "Google API key for consensus phase (Gemini model). Optional — consensus is skipped if missing.",
+      "type": "string",
       "sensitive": true
     }
   }
