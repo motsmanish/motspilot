@@ -7,12 +7,12 @@ When the user says **"run motspilot pipeline"**, **"run motspilot"**, or **"go m
 ## Step 1 — Verify Prerequisites
 
 1. Read the config for project settings and workspace location:
-   `motspilot/.motspilot/config`
-   - Note the `WORKSPACE_DIR` setting. If set, the workspace base is `<WORKSPACE_DIR>/` (relative to project root). Otherwise, the workspace is at `motspilot/.motspilot/workspace/`.
+   `.motspilot/config`
+   - Note the `WORKSPACE_DIR` setting. If set, the workspace base is `<WORKSPACE_DIR>/` (relative to project root). Otherwise, the workspace is at `.motspilot/workspace/`.
    - Use `<workspace>` below to refer to the resolved workspace base path.
 
 2. Find the current task name:
-   `motspilot/.motspilot/current_task`
+   `.motspilot/current_task`
 
 3. Read the work order file:
    `<workspace>/tasks/<task-name>/pipeline_workorder.md`
@@ -27,7 +27,7 @@ When the user says **"run motspilot pipeline"**, **"run motspilot"**, or **"go m
    `<workspace>/tasks/<task-name>/01_requirements.md`
 
 6. Check for a framework guide:
-   `motspilot/prompts/frameworks/<FRAMEWORK>.md`
+   `prompts/frameworks/<FRAMEWORK>.md`
    If it exists, you will include it in every subagent prompt. If not, the subagents work without framework-specific guidance.
 
 7. Check the task checkpoint:
@@ -41,6 +41,8 @@ If prerequisites are missing, tell the user to run `./motspilot.sh go --task=<na
 ## Step 1.5 — Multi-Model Consensus (Pre-Pipeline)
 
 Before starting the subagent phases, run the **Multi-Model Consensus** step. This fans out the full requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge.
+
+**Skip check:** If `CONSENSUS="disabled"` in `.motspilot/config`, skip this entire step and proceed directly to Step 2. Log: `Multi-Model Consensus: SKIPPED (disabled in config)`. The pipeline works normally without consensus — the 5 core phases don't depend on it.
 
 ### How to run it
 
@@ -73,7 +75,7 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
 
 2. Run the standalone consensus script via Bash:
    ```bash
-   php motspilot/bin/consensus.php \
+   php bin/consensus.php \
      --prompt-file=<workspace>/tasks/<task-name>/consensus/prompt.txt \
      --phase=pre-pipeline \
      --output-dir=<workspace>/tasks/<task-name>/consensus/
@@ -121,7 +123,7 @@ Honor the **start from phase** value from the work order — skip earlier phases
 
 ### All artifact paths use the task directory:
 ```
-motspilot/.motspilot/workspace/tasks/<task-name>/
+<workspace>/tasks/<task-name>/
 ```
 
 ### How to Execute a Phase
@@ -134,11 +136,11 @@ For each phase, use the **Task tool** (`subagent_type: general-purpose`).
 <motspilot_phase name="[PHASE NAME]">
 
 <thinking_framework>
-[Full contents of motspilot/prompts/<phase>.md]
+[Full contents of prompts/<phase>.md]
 </thinking_framework>
 
 <framework_guide>
-[Full contents of motspilot/prompts/frameworks/<FRAMEWORK>.md — or "No framework guide available. Use your knowledge of the project's framework based on the codebase exploration." if no guide exists]
+[Full contents of prompts/frameworks/<FRAMEWORK>.md — or "No framework guide available. Use your knowledge of the project's framework based on the codebase exploration." if no guide exists]
 </framework_guide>
 
 <project_config>
@@ -168,7 +170,7 @@ Note: This consensus was synthesized from Claude, GPT-4o, and Gemini analyzing t
 [Phase-specific task — see below]
 
 Write your final output to:
-motspilot/.motspilot/workspace/tasks/<task-name>/[NN_phase.md]
+<workspace>/tasks/<task-name>/[NN_phase.md]
 </task>
 
 </motspilot_phase>
@@ -263,7 +265,7 @@ file map (new files + modified files), and rollback plan.
 Do NOT write any code. Design only.
 
 Write your output to:
-motspilot/.motspilot/workspace/tasks/<task-name>/02_architecture.md
+<workspace>/tasks/<task-name>/02_architecture.md
 ```
 
 ---
@@ -298,7 +300,7 @@ Produce a development summary document listing:
 - Any deviations from the architecture and why
 
 Write your summary to:
-motspilot/.motspilot/workspace/tasks/<task-name>/03_development.md
+<workspace>/tasks/<task-name>/03_development.md
 ```
 
 ---
@@ -349,7 +351,7 @@ The testing prompt's <completion_checklist> requires the subagent to emit
 `[N/A] — justification`, or `[ ] not done — reason`.
 
 Write your summary to:
-motspilot/.motspilot/workspace/tasks/<task-name>/04_testing.md
+<workspace>/tasks/<task-name>/04_testing.md
 ```
 
 ---
@@ -408,7 +410,7 @@ verification prompt's <completion_checklist> requires the subagent to emit
 `[N/A] — justification`, or `[ ] not done — reason`.
 
 Write your report to:
-motspilot/.motspilot/workspace/tasks/<task-name>/05_verification.md
+<workspace>/tasks/<task-name>/05_verification.md
 ```
 
 ---
@@ -454,7 +456,7 @@ The delivery prompt's <completion_checklist> requires the subagent to emit
 `[N/A] — justification`, or `[ ] not done — reason`.
 
 Write your delivery document to:
-motspilot/.motspilot/workspace/tasks/<task-name>/06_delivery.md
+<workspace>/tasks/<task-name>/06_delivery.md
 ```
 
 ---
@@ -492,7 +494,7 @@ On rejection: ask what to change, then re-run the phase with feedback appended t
 After each approved phase, update the checkpoint:
 
 ```bash
-echo "<phase>|approved" > motspilot/.motspilot/workspace/tasks/<task-name>/checkpoint
+echo "<phase>|approved" > <workspace>/tasks/<task-name>/checkpoint
 ```
 
 ---
@@ -503,7 +505,7 @@ When all phases are approved:
 
 1. Archive the task automatically using the Bash tool:
    ```bash
-   ./motspilot/motspilot.sh archive --task=<task-name>
+   motspilot.sh archive --task=<task-name>
    ```
    (Use the task name from the work order — it is always in the **Task name** field.)
 

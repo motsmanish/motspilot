@@ -6,9 +6,20 @@ motspilot is a 5-phase AI pipeline for adding features to **existing application
 
 **Claude Code IS the orchestrator.** When the user says "run motspilot pipeline", Claude Code coordinates all phases using Task subagents. The shell script (`motspilot.sh`) manages named tasks, file state, and auto-archives on completion.
 
+## Install as Plugin
+
+motspilot is distributed as a Claude Code plugin. Install from any session:
+
+```
+/plugin marketplace add motsmanish/motspilot
+/plugin install mots
+```
+
+Skills: `/mots:pilot`, `/mots:pipeline` (alias), `/mots:init`, `/mots:status`, `/mots:archive`, `/mots:reactivate`, `/mots:view`
+
 ## How to Run the Pipeline
 
-When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot"):
+When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot", or `/mots:pilot`):
 
 1. Read `motspilot/PIPELINE_ORCHESTRATOR.md` for full instructions
 2. Read `motspilot/.motspilot/config` — check `WORKSPACE_DIR` to find where task data lives
@@ -123,7 +134,22 @@ All phase prompts use these patterns (derived from Claude and Gemini best practi
 ## Structure
 
 ```
-motspilot/                            # The tool
+motspilot/                            # Repo root = plugin root
+  .claude-plugin/
+    plugin.json                       # Plugin manifest (plugin name: "mots")
+    marketplace.json                  # Self-hosted marketplace
+  .codex-plugin/
+    plugin.json                       # Codex plugin manifest
+  .agents/plugins/
+    marketplace.json                  # Codex marketplace
+  skills/                             # Plugin skills (/mots:*)
+    pilot/SKILL.md                    # Main: /mots:pilot
+    pipeline/SKILL.md                 # Alias: /mots:pipeline
+    init/SKILL.md                     # Setup: /mots:init
+    status/SKILL.md                   # Status: /mots:status
+    archive/SKILL.md                  # Archive: /mots:archive
+    reactivate/SKILL.md               # Restore: /mots:reactivate
+    view/SKILL.md                     # View: /mots:view
   motspilot.sh                        # Shell utility (filing system, not engine)
   PIPELINE_ORCHESTRATOR.md            # Claude Code orchestration instructions
   bin/consensus.php                   # Standalone multi-model consensus script (PHP 8+, no framework)

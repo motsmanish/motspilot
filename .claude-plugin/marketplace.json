@@ -1,0 +1,14 @@
+{
+  "name": "motsmanish",
+  "owner": {
+    "name": "Manish Motwani"
+  },
+  "plugins": [
+    {
+      "name": "mots",
+      "version": "1.1.0",
+      "source": ".",
+      "description": "6-phase AI pipeline for adding features to existing applications"
+    }
+  ]
+}

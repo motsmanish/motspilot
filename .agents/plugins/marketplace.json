@@ -1,0 +1,18 @@
+{
+  "name": "motsmanish",
+  "plugins": [
+    {
+      "name": "mots",
+      "version": "1.1.0",
+      "source": {
+        "path": "."
+      },
+      "description": "6-phase AI pipeline for adding features to existing applications",
+      "category": "development",
+      "policy": {
+        "installation": "auto",
+        "authentication": "optional"
+      }
+    }
+  ]
+}

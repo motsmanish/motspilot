@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-16
+
 ### Added
+- **Claude Code plugin support** — install via `/plugin marketplace add motsmanish/motspilot` + `/plugin install mots`
+- 7 skills: `/mots:pilot`, `/mots:pipeline` (alias), `/mots:init`, `/mots:status`, `/mots:archive`, `/mots:reactivate`, `/mots:view`
+- Codex cross-compatibility (`.codex-plugin/` + `.agents/plugins/marketplace.json`)
+- `CONSENSUS` config variable — graceful degradation when PHP/API keys unavailable
+- `CONFIG_VERSION` field for config migration tracking
+- Secret precedence in `consensus.php`: userConfig (keychain) > env vars > `.env` file
+
+### Changed
+- `PIPELINE_ORCHESTRATOR.md` paths are now plugin-aware (no `motspilot/` prefix)
+- Consensus phase auto-skips when `CONSENSUS=disabled`
+- README installation options re-lettered (plugin is now Option A)
+
+### Added (previous)
 - `WORKSPACE_DIR` config option — store task artifacts in the project repo instead of inside motspilot's own directory. Enables version-controlling task data alongside project code.
 - Installation guide in README — symlink, submodule, and direct clone options with step-by-step instructions.
 

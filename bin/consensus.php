@@ -495,10 +495,32 @@ function main(array $argv): int {
         $envFile = dirname(__DIR__) . '/.env';
     }
 
-    $keys = load_env($envFile);
+    // Secret precedence: userConfig (env vars from Claude Code) → shell env vars → .env file
+    // Claude Code exports userConfig values as environment variables to subprocesses.
+    $envKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY'];
+    $keys = [];
+
+    // 1. Check environment variables first (covers both userConfig and shell exports)
+    foreach ($envKeys as $k) {
+        $val = getenv($k);
+        if ($val !== false && $val !== '') {
+            $keys[$k] = $val;
+        }
+    }
+
+    // 2. Fall back to .env file for any missing keys
+    if (count($keys) < count($envKeys)) {
+        $fileKeys = load_env($envFile);
+        foreach ($envKeys as $k) {
+            if (!isset($keys[$k]) && isset($fileKeys[$k])) {
+                $keys[$k] = $fileKeys[$k];
+            }
+        }
+    }
+
     if (empty($keys)) {
-        stderr("No API keys found. Checked: {$envFile}");
-        stderr('Create motspilot/.env with ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY');
+        stderr("No API keys found. Checked environment variables and {$envFile}");
+        stderr('Provide keys via: (1) Claude Code userConfig, (2) shell environment variables, or (3) .env file');
         return 2;
     }
 

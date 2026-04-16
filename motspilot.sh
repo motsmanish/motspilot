@@ -282,6 +282,14 @@ DEPLOY_CMD="echo 'Deploy not configured — edit .motspilot/config'"
 # This allows task data to be committed to the project's git repository.
 # Example: WORKSPACE_DIR="motspilot-data"
 WORKSPACE_DIR=""
+
+# Multi-model consensus phase
+# Set to "disabled" to skip consensus even when PHP and API keys are available.
+# /mots:init sets this automatically based on dependency detection.
+CONSENSUS="enabled"
+
+# Config format version — used by /mots:init to detect stale configs and offer migration.
+CONFIG_VERSION="1"
 EOF
         return 1 # signal that config was just created
     fi

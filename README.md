@@ -39,43 +39,34 @@ Coordinates five specialized AI agents (architecture, development, testing, veri
 
 ## Installation
 
-### Option A: Symlink (recommended for teams)
+### As a Claude Code Plugin (recommended)
 
-Clone motspilot once and symlink it into each project. The tool stays separate from your project code, and updates apply to all projects.
+From any Claude Code session:
 
 ```bash
-# Clone motspilot to a shared location
-git clone https://github.com/motsmanish/motspilot.git ~/motspilot
-
-# In your project root, create a symlink
-cd /path/to/your-project
-ln -s ~/motspilot ./motspilot
-
-# Add the symlink to your project's .gitignore
-echo '/motspilot' >> .gitignore
+/plugin marketplace add motsmanish/motspilot
+/plugin install mots
 ```
 
-### Option B: Submodule (for version-pinning)
-
-Add motspilot as a git submodule. This pins a specific version and makes setup automatic for other developers who clone your repo.
+Then in your target project:
 
 ```bash
-cd /path/to/your-project
-git submodule add https://github.com/motsmanish/motspilot.git motspilot
-git commit -m "Add motspilot as submodule"
+/mots:init                                # One-time setup
+/mots:pilot add login throttling          # Run the pipeline
+/mots:status                              # Check progress
+/mots:view verify                         # Read verification report
+/mots:archive --task=add-login-throttling # Archive when done
 ```
 
-Other developers clone with `--recursive`, or run `git submodule update --init` after cloning.
+> **Requires:** WSL, macOS, or Linux (bash). Consensus phase optionally requires PHP 8+ and API keys for Claude, GPT-4o, and Gemini.
 
-### Option C: Direct clone (simplest)
-
-Clone motspilot directly into your project. Simple but you manage updates manually.
+### Clone (for development/contribution)
 
 ```bash
-cd /path/to/your-project
 git clone https://github.com/motsmanish/motspilot.git
-echo '/motspilot' >> .gitignore
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup. Alternative integration methods (symlink, submodule) are documented there.
 
 ---
 
