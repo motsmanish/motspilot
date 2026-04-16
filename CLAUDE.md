@@ -51,10 +51,11 @@ When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot",
 Framework-specific knowledge lives in `prompts/frameworks/<name>.md`. Currently available:
 - `cakephp.md` — CakePHP 4.x patterns, API reference, verification checks
 - `plain-php.md` — Plain-PHP patterns (Shape A page-file / Shape B PDS-skeleton callouts), webserver isolation rules
+- `laravel.md` — Laravel 11.x+ patterns (Eloquent, Form Requests, Policies, Events/Queues, Pest/PHPUnit, artisan commands)
 
-Both framework guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted) and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. References to MailHog have been genericized to "mail catcher (Mailpit/MailHog/smtp4dev)".
+All framework guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted) and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. References to MailHog have been genericized to "mail catcher (Mailpit/MailHog/smtp4dev)".
 
-Both framework guides also include `<framework_tool_affinity>` blocks that route the AI toward correct tool usage patterns for that framework's ecosystem.
+All framework guides also include `<framework_tool_affinity>` blocks that route the AI toward correct tool usage patterns for that framework's ecosystem.
 
 When a framework guide exists for the configured framework, it is included in every subagent prompt alongside the thinking framework.
 
@@ -156,7 +157,7 @@ motspilot/                            # Repo root = plugin root
   .env                                # API keys for consensus (ANTHROPIC, OPENAI, GEMINI)
   prompts/                            # Thinking frameworks (one per phase, YAML frontmatter)
   prompts/_xml_tags.md                # Canonical reference for all XML tag names
-  prompts/frameworks/                 # Framework-specific guides (cakephp.md, etc.)
+  prompts/frameworks/                 # Framework-specific guides (cakephp.md, laravel.md, plain-php.md)
   .motspilot/
     config                            # Project settings (includes WORKSPACE_DIR)
     current_task                      # Active task name
