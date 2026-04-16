@@ -2,6 +2,14 @@
 
 This file is automatically included by the motspilot pipeline when `FRAMEWORK="plain-php"` is set in config. It provides conventions for PHP projects **without a full-stack framework** — no Laravel, Symfony, CakePHP, CodeIgniter. Expect hand-rolled PDO, procedural or lightly-OO code, Composer-optional, PSR-4 autoloading if lucky.
 
+<framework_tool_affinity>
+Plain-PHP-specific tool routing:
+- Use `php -l <file>` to syntax-check every modified file — no framework CLI to fall back on.
+- Use `composer dump-autoload` after adding new classes if PSR-4 autoloading is present.
+- For constant values: grep the project root for existing `define()` or `const` declarations before defining new ones.
+- For database: prefer prepared statements via PDO. Never interpolate user input into SQL strings.
+</framework_tool_affinity>
+
 ---
 
 ## Version Reference

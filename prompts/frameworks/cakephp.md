@@ -2,6 +2,15 @@
 
 This file is automatically included by the motspilot pipeline when `FRAMEWORK="cakephp"` is set in config. It provides framework-specific knowledge for all pipeline phases.
 
+<framework_tool_affinity>
+CakePHP-specific tool routing:
+- Use `bin/cake bake migration` to scaffold migration files — never handwrite migration boilerplate from scratch.
+- Use `bin/cake bake model` to scaffold Table/Entity pairs — then customize. Never write a Table class without baking first.
+- Use `bin/cake routes` to verify route conflicts before adding new routes.
+- Use `bin/cake schema_cache clear` after migration changes.
+- For constant values: grep `src/Model/` for existing constants before defining new ones.
+</framework_tool_affinity>
+
 ---
 
 ## Version Reference
