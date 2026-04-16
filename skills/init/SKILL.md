@@ -25,17 +25,47 @@ Set up motspilot in the current project directory.
 
 4. Update `.motspilot/config` with detected values using Edit. Show the user what was detected and let them confirm or adjust.
 
-5. Check consensus dependencies:
+5. **Set up consensus (interactive — ask, don't defer):**
+
+   Check if consensus can run:
    - Run `php --version` — is PHP 8.0+ available?
-   - Check if consensus API keys are available via `userConfig` (stored in keychain by Claude Code) or shell environment variables (`$ANTHROPIC_API_KEY`, `$OPENAI_API_KEY`, `$GEMINI_API_KEY`)
-   - If PHP or all 3 keys are missing: set CONSENSUS=disabled in config and tell the user consensus is optional, the pipeline works without it
-   - If all present: confirm consensus is enabled
+   - Check for API keys in shell environment: `$ANTHROPIC_API_KEY`, `$OPENAI_API_KEY`, `$GEMINI_API_KEY`
+
+   Then ask the user ONE question:
+
+   **If PHP is available but keys are missing:**
+   > Consensus requires 3 API keys (Anthropic, OpenAI, Google Gemini) to fan out requirements to multiple AI models before the pipeline runs. It's optional — the pipeline works fine without it.
+   >
+   > Would you like to set up consensus now?
+   > 1. **Yes** — I'll tell you which environment variables to add
+   > 2. **Skip** — disable consensus, I can enable it later by re-running /mots:init
+
+   If they choose **Yes**, tell them:
+   > Add these to your `~/.bashrc` (or `~/.zshrc`), then restart Claude Code:
+   > ```
+   > export ANTHROPIC_API_KEY="your-key-here"
+   > export OPENAI_API_KEY="your-key-here"
+   > export GEMINI_API_KEY="your-key-here"
+   > ```
+   > After restarting, run `/mots:init` again and I'll detect them automatically.
+
+   Set `CONSENSUS=disabled` in config for now (it will be enabled on next init when keys are detected).
+
+   **If PHP is missing:**
+   > Consensus requires PHP 8.0+ (not installed). Skipping — the pipeline works without it.
+
+   Set `CONSENSUS=disabled` in config.
+
+   **If PHP and all 3 keys are present:**
+   > Consensus is ready (PHP + all 3 API keys detected).
+
+   Set `CONSENSUS=enabled` in config.
 
 6. Show a summary:
    ```
    motspilot initialized for: <project name>
    Language: PHP 8.2
-   Framework: CakePHP (guide: prompts/frameworks/cakephp.md)
+   Framework: Laravel (guide: prompts/frameworks/laravel.md)
    Test command: ./vendor/bin/phpunit
    Consensus: enabled / disabled (reason)
 
