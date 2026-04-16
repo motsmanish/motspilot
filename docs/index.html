@@ -466,7 +466,7 @@
             </div>
             <div class="col-6 col-md-3">
                 <div class="stat-card">
-                    <div class="stat-number">7</div>
+                    <div class="stat-number">24</div>
                     <div class="stat-label">Prompt Engineering Techniques</div>
                 </div>
             </div>
@@ -827,7 +827,7 @@
         <!-- ============ PHASES ============ -->
         <div class="tab-pane fade" id="phases" role="tabpanel">
 
-            <p class="text-muted mb-4">Before the phases begin, a <strong>multi-model consensus</strong> step queries 3 AIs in parallel and synthesizes a unified starting context. Each phase then uses a <strong>thinking framework</strong> (not a checklist) and receives the <strong>framework guide</strong> for your project's framework. Prompt engineering techniques applied across all phases: XML-tagged prompt assembly, investigate-before-acting guards, anti-overengineering clauses, structured 12-item <code>&lt;completion_checklist&gt;</code> blocks (replacing the older <code>&lt;self_check&gt;</code>), few-shot examples, quote-grounded findings, and constants discipline (no magic values for domain states). Verification adds the <strong>MUST FIX (untested seam)</strong> non-downgradeable severity tier and four mechanical consistency checks; delivery executes smoke tests with an entry-point + side-effect requirement before marking the task complete.</p>
+            <p class="text-muted mb-4">Before the phases begin, a <strong>multi-model consensus</strong> step queries 3 AIs in parallel and synthesizes a unified starting context (9-section structured format with Agreed/Split/Risks/Scope sections). Each phase prompt includes <strong>YAML frontmatter</strong> (parsed by <code>yq</code>), a <code>&lt;hard_constraints&gt;</code> block of non-negotiable rules as the first content the AI reads, and a <strong>thinking framework</strong> (not a checklist). Every phase produces an <code>&lt;analysis&gt;</code>/<code>&lt;summary&gt;</code> output split &mdash; scratch work stays on disk, only clean summaries flow downstream. Further techniques: XML-tagged prompt assembly, investigate-before-acting guards, anti-overengineering clauses, structured 12-item <code>&lt;completion_checklist&gt;</code> blocks, <code>&lt;tool_affinity&gt;</code> rules, few-shot examples, quote-grounded findings with mandatory file:line evidence, confidence scoring (1&ndash;10), adversarial anti-patterns, and constants discipline. Verification adds the <strong>MUST FIX (untested seam)</strong> non-downgradeable severity tier, four mechanical consistency checks, and a terse <code>VERDICT:</code> first line; delivery executes smoke tests with an entry-point + side-effect requirement. Optional <strong>parallel 3-lens review</strong> fans out Architecture and Verification into 3 specialist subagents for medium/large features.</p>
 
             <!-- Phase 1 -->
             <div class="card phase-card p-4 mb-4">
@@ -855,7 +855,7 @@
                             <h5 class="mb-1">Multi-Model Consensus <small class="text-muted fw-normal">&mdash; 3 AIs before pipeline starts</small></h5>
                             <span class="badge badge-no">Automatic</span>
                         </div>
-                        <p class="text-muted mb-3">Fans out the task requirements to <strong>Claude + GPT-4o + Gemini</strong> in parallel, collects all responses, then synthesizes via a <strong>3-pass process</strong> (Extract &rarr; Reconcile &rarr; Synthesize) with completeness verification.</p>
+                        <p class="text-muted mb-3">Fans out the task requirements to <strong>Claude + GPT-4o + Gemini</strong> in parallel, collects all responses, then synthesizes via a <strong>3-pass process</strong> (Extract &rarr; Reconcile &rarr; Synthesize) into a <strong>9-section structured format</strong> (Agreed/Split/Risks/Scope sections) with completeness verification. Split decisions auto-resolve by majority when <code>AUTO_APPROVE=all</code>.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Output Files (per task)</strong>
                             <div class="text-muted" style="font-size: 0.85rem;">
@@ -880,7 +880,7 @@
                             <h5 class="mb-1">Architecture <small class="text-muted fw-normal">&mdash; Design only</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Includes <code>&lt;investigate_before_designing&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, assumption-gating, and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output as <code>[x] done &mdash; evidence</code> / <code>[N/A] &mdash; justification</code> / <code>[ ] not done &mdash; reason</code>.</p>
+                        <p class="text-muted mb-3">Explores the codebase, understands existing patterns, traces blast radius, and produces a comprehensive design document. Includes <code>&lt;hard_constraints&gt;</code>, <code>&lt;investigate_before_designing&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, assumption-gating, YAML frontmatter, <code>&lt;analysis&gt;</code>/<code>&lt;summary&gt;</code> output split, and a 12-item <code>&lt;completion_checklist&gt;</code>. Large features are decomposed into 5&ndash;30 discrete implementation units. Optional <strong>parallel 3-lens review</strong> (integration-fit / blast-radius / testability) for medium/large features.</p>
                         <div class="accordion" id="archAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -946,7 +946,7 @@
                             <h5 class="mb-1">Development <small class="text-muted fw-normal">&mdash; Build in tiny loops</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Includes <code>&lt;investigate_before_coding&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, follow-through policy, and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output as <code>[x] done &mdash; evidence</code> / <code>[N/A] &mdash; justification</code> / <code>[ ] not done &mdash; reason</code>.</p>
+                        <p class="text-muted mb-3">Implements the feature following the architecture document. Creates and modifies actual files in the codebase. Includes <code>&lt;hard_constraints&gt;</code>, <code>&lt;investigate_before_coding&gt;</code> guard, <code>&lt;anti_overengineering&gt;</code> clause, <code>&lt;tool_affinity&gt;</code> rules (routes AI toward Grep/Edit over Bash equivalents), <code>&lt;one_in_progress&gt;</code> rule (one WIP item at a time), <code>&lt;analysis&gt;</code>/<code>&lt;summary&gt;</code> output split, and a 12-item <code>&lt;completion_checklist&gt;</code>. Each build layer includes a <strong>Success signal</strong> defining when to advance. BLOCKER markers and smoke tests use dual-form naming (imperative + present-continuous).</p>
                         <div class="accordion" id="devAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
@@ -996,7 +996,7 @@
                             <h5 class="mb-1">Testing <small class="text-muted fw-normal">&mdash; Security-first</small></h5>
                             <span class="badge badge-yes">Writes code</span>
                         </div>
-                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Includes <code>&lt;investigate_before_testing&gt;</code> guard, few-shot <code>&lt;example&gt;</code> blocks for test naming, and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output. Falls back to manual test checklists when no test framework exists. <strong>Integration-vs-unit hard rule:</strong> for any runtime path that runs inside framework plumbing (events, middleware, observers, lifecycle hooks, schedulers, queues), at least one test must exercise the real dispatch mechanism &mdash; reflection-based unit tests directly invoking handler methods are not sufficient. The testing summary must include a runtime-path classification table (pure-logic / plumbing-dependent / external-I/O) so verification can cross-check coverage.</p>
+                        <p class="text-muted mb-3">Writes comprehensive tests starting with what scares you most, not what's easiest. Includes <code>&lt;hard_constraints&gt;</code>, <code>&lt;investigate_before_testing&gt;</code> guard, <code>&lt;analysis&gt;</code>/<code>&lt;summary&gt;</code> output split, few-shot <code>&lt;example&gt;</code> blocks for test naming, and a 12-item <code>&lt;completion_checklist&gt;</code>. Falls back to manual test checklists when no test framework exists. <strong>Integration-vs-unit hard rule:</strong> for any runtime path that runs inside framework plumbing (events, middleware, observers, lifecycle hooks, schedulers, queues), at least one test must exercise the real dispatch mechanism &mdash; reflection-based unit tests directly invoking handler methods are not sufficient. The testing summary must include a runtime-path classification table (pure-logic / plumbing-dependent / external-I/O) so verification can cross-check coverage.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Test Priority Order</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -1021,7 +1021,7 @@
                             <h5 class="mb-1">Verification <small class="text-muted fw-normal">&mdash; Skeptical senior reviewer</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Includes <code>&lt;investigate_before_judging&gt;</code> guard requiring quoted code for every finding. Completeness contract: must read every file. Requirements coverage matrix (MET/NOT MET) per requirement. 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output.</p>
+                        <p class="text-muted mb-3">Reads actual code (not reports), traces data flows, checks for security issues, verifies framework API correctness. Includes <code>&lt;hard_constraints&gt;</code>, <code>&lt;investigate_before_judging&gt;</code> guard, <code>&lt;analysis&gt;</code>/<code>&lt;summary&gt;</code> output split, and a 12-item <code>&lt;completion_checklist&gt;</code>. The <code>&lt;summary&gt;</code> starts with a terse <code>VERDICT: READY | READY WITH NOTES | NOT READY</code> line. Every finding requires file:line + code evidence (findings without evidence are invalid) and a <strong>confidence score</strong> (1&ndash;10; below 7 demotes to non-blocking NOTE). Adversarial <code>&lt;before_pass&gt;</code> and <code>&lt;before_fail&gt;</code> checklists guard against verification avoidance. A dated <code>&lt;hard_exclusions&gt;</code> list suppresses known false-positive patterns. Optional <strong>parallel 3-lens review</strong> (correctness / consistency / regression) for medium/large features.</p>
                         <div class="card p-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Verification Checklist</strong>
                             <ol class="text-muted mb-0" style="font-size: 0.85rem;">
@@ -1064,7 +1064,7 @@
                             <h5 class="mb-1">Delivery <small class="text-muted fw-normal">&mdash; Safe and reversible</small></h5>
                             <span class="badge badge-no">No code</span>
                         </div>
-                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Includes <code>&lt;investigate_before_documenting&gt;</code> guard and a 12-item <code>&lt;completion_checklist&gt;</code> emitted in the output. Surfaces unresolved verification issues with [VERIFY] markers.</p>
+                        <p class="text-muted mb-3">Produces deployment guide with copy-paste commands, rollback steps, smoke tests, and monitoring instructions. Includes <code>&lt;hard_constraints&gt;</code>, <code>&lt;investigate_before_documenting&gt;</code> guard, <code>&lt;analysis&gt;</code>/<code>&lt;summary&gt;</code> output split, and a 12-item <code>&lt;completion_checklist&gt;</code>. Surfaces unresolved verification issues with [VERIFY] markers.</p>
                         <div class="card p-3 mb-3" style="background: var(--surface-2);">
                             <strong class="mb-2 d-block" style="font-size: 0.85rem;">Smoke-Test Execution Gate (delivery section 3.2)</strong>
                             <p class="text-muted mb-2" style="font-size: 0.85rem;">Smoke tests are <strong>not</strong> a post-deploy operator checklist. The delivery phase <strong>executes</strong> every smoke test before marking the task complete. Each smoke test requires <strong>both</strong>:</p>
@@ -1285,6 +1285,10 @@
                             <td><code>./motspilot.sh view &lt;phase&gt; [--task=&lt;name&gt;]</code></td>
                             <td>View a phase artifact in terminal</td>
                         </tr>
+                        <tr>
+                            <td><code>./motspilot.sh mem-check</code></td>
+                            <td>Check memory index health (line/byte caps, staleness)</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -1330,7 +1334,7 @@
                     </div>
                     <div>
                         <h6 class="mb-0">cakephp.md</h6>
-                        <small class="text-muted">CakePHP 4.x &mdash; Version reference, naming conventions, migration/entity/table/service/controller/template/route/test patterns, verification checks, deployment commands. Smoke-test templates assert side effects (mail catcher, DB rows, cache keys) and point at <code>prompts/delivery.md</code> section 3.2 for the execution gate.</small>
+                        <small class="text-muted">CakePHP 4.x &mdash; Version reference, naming conventions, migration/entity/table/service/controller/template/route/test patterns, verification checks, deployment commands, and <code>&lt;framework_tool_affinity&gt;</code> rules. Smoke-test templates assert side effects (mail catcher, DB rows, cache keys) and point at <code>prompts/delivery.md</code> section 3.2 for the execution gate.</small>
                     </div>
                 </div>
             </div>
@@ -1341,7 +1345,7 @@
                     </div>
                     <div>
                         <h6 class="mb-0">plain-php.md</h6>
-                        <small class="text-muted">Plain PHP (no framework) &mdash; structured around two callouts: <strong>Shape A</strong> (page-file) and <strong>Shape B</strong> (PDS-skeleton). Includes webserver isolation rules and side-effect-asserting smoke-test templates that point at <code>prompts/delivery.md</code> section 3.2 for the execution gate.</small>
+                        <small class="text-muted">Plain PHP (no framework) &mdash; structured around two callouts: <strong>Shape A</strong> (page-file) and <strong>Shape B</strong> (PDS-skeleton). Includes webserver isolation rules, <code>&lt;framework_tool_affinity&gt;</code> rules, and side-effect-asserting smoke-test templates that point at <code>prompts/delivery.md</code> section 3.2 for the execution gate.</small>
                     </div>
                 </div>
             </div>
@@ -1428,6 +1432,11 @@
                             <td>Deployment Commands</td>
                             <td>Deploy, rollback, cache clear commands</td>
                             <td>Delivery</td>
+                        </tr>
+                        <tr>
+                            <td>Tool Affinity</td>
+                            <td><code>&lt;framework_tool_affinity&gt;</code> &mdash; routes AI toward correct tools for the framework</td>
+                            <td>Development</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1550,16 +1559,16 @@
             <!-- How the prompt architecture works -->
             <h4 class="mt-5 mb-3">Prompt Architecture</h4>
             <div class="card p-4">
-                <p class="text-muted mb-3">Each subagent receives a layered prompt assembled by the orchestrator using XML tags for unambiguous section parsing:</p>
+                <p class="text-muted mb-3">Each subagent receives a layered prompt assembled by the orchestrator using XML tags for unambiguous section parsing. Phase prompts include YAML frontmatter (parsed by <code>yq</code>) and emit <code>&lt;analysis&gt;</code> (scratch work, stays on disk) + <code>&lt;summary&gt;</code> (clean deliverable forwarded downstream):</p>
                 <div class="code-block">
                     <span class="comment">&lt;motspilot_phase name="[phase name]"&gt;</span><br><br>
                     <span class="comment">&lt;thinking_framework&gt;</span><br>
-                    <span style="color: var(--accent-light);">[Full contents of prompts/&lt;phase&gt;.md]</span><br>
-                    <span style="color: #6a737d;">Includes &lt;investigate_before_*&gt;, &lt;anti_overengineering&gt;, &lt;completion_checklist&gt; (12 items), &lt;example&gt; blocks</span><br>
+                    <span style="color: var(--accent-light);">[Full contents of prompts/&lt;phase&gt;.md — YAML frontmatter + prompt body]</span><br>
+                    <span style="color: #6a737d;">Includes &lt;hard_constraints&gt;, &lt;investigate_before_*&gt;, &lt;anti_overengineering&gt;, &lt;tool_affinity&gt;, &lt;completion_checklist&gt; (12 items), &lt;example&gt; blocks</span><br>
                     <span class="comment">&lt;/thinking_framework&gt;</span><br><br>
                     <span class="comment">&lt;framework_guide&gt;</span><br>
                     <span style="color: var(--accent-light);">[Full contents of prompts/frameworks/&lt;FRAMEWORK&gt;.md]</span><br>
-                    <span style="color: #6a737d;">Framework-specific patterns, API reference, verification checks</span><br>
+                    <span style="color: #6a737d;">Framework-specific patterns, API reference, verification checks, &lt;framework_tool_affinity&gt;</span><br>
                     <span class="comment">&lt;/framework_guide&gt;</span><br><br>
                     <span class="comment">&lt;project_config&gt;</span><br>
                     <span style="color: #6a737d;">Language, version, framework, test command, app URL</span><br>
@@ -1568,17 +1577,18 @@
                     <span style="color: #6a737d;">Full contents of 01_requirements.md</span><br>
                     <span class="comment">&lt;/requirements&gt;</span><br><br>
                     <span class="comment">&lt;consensus&gt;</span><br>
-                    <span style="color: #6a737d;">Multi-model synthesis (omitted if unavailable)</span><br>
+                    <span style="color: #6a737d;">Multi-model synthesis &mdash; 9-section structured format (omitted if unavailable)</span><br>
                     <span class="comment">&lt;/consensus&gt;</span><br><br>
                     <span class="comment">&lt;previous_phases&gt;</span><br>
-                    <span style="color: #6a737d;">Cumulative context from all completed prior phases</span><br>
+                    <span style="color: #6a737d;">&lt;summary&gt; blocks from completed phases (directive, not narrative)</span><br>
                     <span class="comment">&lt;/previous_phases&gt;</span><br><br>
                     <span class="comment">&lt;task&gt;</span><br>
                     <span style="color: #6a737d;">Phase-specific instructions</span><br>
                     <span class="comment">&lt;/task&gt;</span><br><br>
-                    <span class="comment">&lt;/motspilot_phase&gt;</span>
+                    <span class="comment">&lt;/motspilot_phase&gt;</span><br><br>
+                    <span style="color: #6a737d;">Phase output: &lt;analysis&gt; (scratch, disk only) + &lt;summary&gt; (forwarded) + &lt;task-notification&gt; (completion signal)</span>
                 </div>
-                <p class="text-muted mt-3 mb-0" style="font-size: 0.85rem;"><strong>Why XML tags?</strong> Claude's prompt engineering best practices recommend XML tags over plain-text markers for unambiguous parsing of multi-section prompts. Each section is clearly delineated, reducing misinterpretation when mixing instructions, context, examples, and variable inputs.</p>
+                <p class="text-muted mt-3 mb-0" style="font-size: 0.85rem;"><strong>Why XML tags?</strong> Claude's prompt engineering best practices recommend XML tags over plain-text markers for unambiguous parsing of multi-section prompts. Each section is clearly delineated, reducing misinterpretation when mixing instructions, context, examples, and variable inputs. The canonical list of all XML tags is in <code>prompts/_xml_tags.md</code>.</p>
             </div>
         </div>
 
@@ -1671,7 +1681,7 @@
                 </h2>
                 <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                     <div class="accordion-body text-muted">
-                        Before the pipeline starts, your requirements are sent to Claude, GPT-4o, and Gemini in parallel. A synthesis pass merges their responses, highlights where they agree, and surfaces unique insights each model contributed. This reduces single-model blind spots and gives the pipeline a stronger starting context.
+                        Before the pipeline starts, your requirements are sent to Claude, GPT-4o, and Gemini in parallel. A synthesis pass merges their responses into a 9-section structured format (Agreed/Split/Risks/Scope sections), highlights where they agree, and surfaces unique insights each model contributed. Split decisions auto-resolve by majority when <code>AUTO_APPROVE=all</code>. This reduces single-model blind spots and gives the pipeline a stronger starting context.
                     </div>
                 </div>
             </div>

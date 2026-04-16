@@ -31,6 +31,9 @@ Coordinates five specialized AI agents (architecture, development, testing, veri
   - Linux: you almost certainly have bash 4+ already
   - macOS: ships with bash 3.2 — install a newer version with `brew install bash`
   - Windows: use Git Bash, WSL, or any bash 4+ environment
+- **`yq` v4.52+** — parses YAML frontmatter from phase prompts
+  - Install: `wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O ~/.local/bin/yq && chmod +x ~/.local/bin/yq`
+  - macOS: `brew install yq`
 
 ---
 
@@ -103,7 +106,7 @@ motspilot works with any framework. Framework-specific knowledge lives in `promp
 | `cakephp.md` | CakePHP 4.x | Shipped |
 | `plain-php.md` | Plain PHP (no framework) | Shipped |
 
-Both shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase) and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules. Without a framework guide, the pipeline still works — it uses framework-agnostic reasoning and discovers patterns from your codebase. Framework guides make the AI's output more precise by providing version-specific API patterns, verification checks, and deployment commands.
+Both shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase), `<framework_tool_affinity>` blocks that route the AI toward correct tool usage, and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules. Without a framework guide, the pipeline still works — it uses framework-agnostic reasoning and discovers patterns from your codebase. Framework guides make the AI's output more precise by providing version-specific API patterns, verification checks, and deployment commands.
 
 **Community contributions welcome.** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write a framework guide. Guides for Laravel, Django, Rails, Next.js, Express, and others would be valuable additions.
 
@@ -177,6 +180,7 @@ Tasks auto-archive when the delivery phase is approved. You never lose the artif
 | `./motspilot.sh reactivate <name>` | Restore task from archive |
 | `./motspilot.sh reset --task=<name>` | Delete phase artifacts (keeps requirements) |
 | `./motspilot.sh view <phase> [--task=<name>]` | View a phase artifact |
+| `./motspilot.sh mem-check` | Check memory index health (line/byte caps, staleness) |
 
 **Phase names:** `architecture` · `development` · `testing` · `verification` · `delivery`
 
@@ -199,21 +203,33 @@ Requirements → Architecture → Development → Testing → Verification → D
 | 5 | Verification | Senior code review — security, correctness, framework patterns | No |
 | 6 | Delivery | Executes smoke tests, deployment steps, rollback plan, git commit message | No |
 
-Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Prompt engineering techniques applied across all phases:
+Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Every phase prompt includes YAML frontmatter (parsed by `yq`) and a `<hard_constraints>` block of non-negotiable rules as the first content the AI reads. Prompt engineering techniques applied across all phases:
 
+- **YAML frontmatter** — Machine-readable metadata on every prompt (`phase`, `order`, `writes_code`, `artifact`, `requires`, `framework_guide`, `output_scaling`, `allowed_tools`)
+- **`<hard_constraints>` block** — Non-negotiable rules at the top of every prompt, read before any creative work begins
+- **`<analysis>` / `<summary>` output split** — Every phase produces two XML blocks. `<analysis>` is scratch work (stays on disk). `<summary>` is the clean deliverable downstream phases read. Context forwarding uses summaries, not full reasoning history.
 - **XML-tagged prompt assembly** — Orchestrator wraps each section (`<thinking_framework>`, `<requirements>`, `<previous_phases>`, etc.) in XML tags for unambiguous parsing
 - **Investigate-before-acting guards** — `<investigate_before_designing>`, `<investigate_before_coding>`, etc. prevent speculation about unread code
 - **Anti-overengineering clauses** — Explicit `<anti_overengineering>` blocks prevent scope creep and premature abstraction
 - **Phase-specific completion checklists** — Every phase ends with a structured 12-item `<completion_checklist>` block (replacing the older prose `<self_check>`). Each subagent emits results in its phase output as `[x] done — evidence`, `[N/A] — justification`, or `[ ] not done — reason`. Unchecked items, missing evidence, and unjustified N/A count as the phase being incomplete.
+- **`<tool_affinity>` rules** — Development and framework guides route AI toward correct tools (Grep over `Bash(grep)`, Edit over `Bash(sed)`, etc.)
+- **`<one_in_progress>` rule** — Development enforces one WIP item at a time. Each layer includes a `**Success signal:**` defining when to advance.
 - **Few-shot examples** — `<example>` blocks demonstrate good vs bad output patterns
 - **Completeness contracts** — Verification must read every file; development must complete every planned file
 - **Assumption-gating** — Ambiguous requirements must be stated explicitly, never silently filled in
-- **Quote-grounded findings** — Verification must quote specific code lines before making judgments
+- **Quote-grounded findings** — Verification must quote specific code lines before making judgments. Findings without file:line + code evidence are invalid.
+- **Confidence scoring** — Every Verification finding carries a confidence score (1-10). Below 7 demotes to NOTE (non-blocking). A dated `<hard_exclusions>` list suppresses known false-positive patterns.
+- **Adversarial anti-patterns** — Verification guards against verification avoidance and "seduced by 80%" failure modes, with `<before_pass>` and `<before_fail>` checklists.
+- **Terse verdict first** — Verification's `<summary>` starts with `VERDICT: READY | READY WITH NOTES | NOT READY — <reason>` as its first line.
 - **Constants discipline** — Development greps for existing constants before coding domain values (statuses, tiers, roles); Verification flags duplicated or missing constants as SHOULD FIX
 - **MUST FIX (untested seam) severity tier** — Verification uses **CRITICAL / MUST FIX (untested seam) / SHOULD FIX / IMPROVE**. The MUST FIX tier is non-downgradeable and applies to any runtime code path that exists in the shipped change but is not exercised by any test. It cannot be deferred as a follow-up note. `READY WITH NOTES` is restricted to IMPROVE-tier notes only.
 - **Verification consistency checks** — Verification runs four mechanical grep-level checks across artifacts and source: data-value consistency (constants/enums/columns/config keys agree across docs and code), symbol-name consistency, timezone consistency for time-bucketed columns (write-side and read-side must agree), and event-name consistency for pub/sub (every listener has a matching dispatch site in the target codebase, not only in `vendor/`).
-- **Smoke-test execution gate (Delivery)** — The delivery phase **executes** every smoke test before marking the task complete. Each smoke test requires BOTH an entry-point check (HTTP status, CLI exit, queue arrival) AND a side-effect check (DB row, mail catcher message, file written, cache key updated, external API called). Status-code-only tests count as zero tests. Tests that cannot run in the environment are tagged `[UNEXECUTABLE]` with a one-sentence justification and surfaced for the operator.
+- **Smoke-test execution gate (Delivery)** — The delivery phase **executes** every smoke test before marking the task complete. Each smoke test requires BOTH an entry-point check (HTTP status, CLI exit, queue arrival) AND a side-effect check (DB row, mail catcher message, file written, cache key updated, external API called). Status-code-only tests count as zero tests. Tests that cannot run in the environment are tagged `[UNEXECUTABLE]` with a one-sentence justification and surfaced for the operator. Smoke tests use dual-form naming (imperative + present-continuous).
 - **Integration-vs-unit hard rule (Testing)** — For any runtime path that runs inside framework plumbing (events, middleware, observers, lifecycle hooks, schedulers, queues), at least one test must exercise the real dispatch mechanism. Reflection-based unit tests directly invoking handler methods are not sufficient. The testing summary must include a runtime-path classification table (pure-logic / plumbing-dependent / external-I/O) so verification can cross-check coverage.
+- **Parallel 3-lens review** — (Optional, medium/large features) Architecture and Verification can fan out into 3 specialist subagents. All 3 complete — no sibling cancellation.
+- **`<task-notification>` envelope** — Every phase emits a structured XML completion signal parsed by the orchestrator.
+- **5-30 unit decomposition** — Architecture decomposes large features into 5-30 discrete implementation units.
+- **Phase heartbeats** — Orchestrator emits progress lines every ~30s during long phases.
 
 Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one exists for your framework.
 
@@ -239,11 +255,12 @@ motspilot/                              # The tool (symlink, submodule, or clone
 ├── README.md                           # This file
 ├── CLAUDE.md                           # Quick reference for Claude Code
 ├── prompts/
-│   ├── architecture.md                 # Architecture thinking framework
-│   ├── development.md                  # Development thinking framework
-│   ├── testing.md                      # Testing thinking framework
-│   ├── verification.md                 # Verification thinking framework
-│   ├── delivery.md                     # Delivery thinking framework
+│   ├── _xml_tags.md                    # Canonical reference for all XML tag names
+│   ├── architecture.md                 # Architecture thinking framework (YAML frontmatter)
+│   ├── development.md                  # Development thinking framework (YAML frontmatter)
+│   ├── testing.md                      # Testing thinking framework (YAML frontmatter)
+│   ├── verification.md                 # Verification thinking framework (YAML frontmatter)
+│   ├── delivery.md                     # Delivery thinking framework (YAML frontmatter)
 │   └── frameworks/                     # Framework-specific guides
 │       └── cakephp.md                  # CakePHP 4.x guide
 └── .motspilot/
@@ -349,7 +366,7 @@ See `prompts/frameworks/cakephp.md` as a reference.
 
 ## Multi-Model Consensus
 
-Before the pipeline phases begin, motspilot runs a **Multi-Model Consensus** step. It fans out the task requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge using a **3-pass process** (Extract → Reconcile → Synthesize) with a completeness contract ensuring no unique insight is lost. The synthesized output is then fed as additional context into every pipeline phase.
+Before the pipeline phases begin, motspilot runs a **Multi-Model Consensus** step. It fans out the task requirements to 3 LLMs (Claude, GPT-4o, Gemini) in parallel, collects their responses, and synthesizes a single authoritative starting point via a Claude judge using a **3-pass process** (Extract → Reconcile → Synthesize) with a completeness contract ensuring no unique insight is lost. The synthesis uses a **9-section structured format** with Agreed/Split/Risks/Scope sections. Split decisions auto-resolve by majority when `AUTO_APPROVE=all`. The synthesized output is then fed as additional context into every pipeline phase.
 
 The consensus script is a standalone PHP CLI — no framework dependencies, just PHP 8.0+ with curl:
 
