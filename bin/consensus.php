@@ -356,17 +356,28 @@ Compare the extracted points across models:
 - Identify conflicts — resolve each one explicitly. Favor: correctness > completeness > clarity > simplicity. State which position you chose and why in a brief internal note (do not include this in the final output).
 - Identify unique points (only one model mentioned) — include them if they are correct and relevant.
 
-### Pass 3 — Synthesize
-Produce ONE authoritative, well-structured answer that merges all surviving points into a coherent whole.
+### Pass 3 — Synthesize into structured sections
+Produce ONE authoritative answer organized into these sections:
+
+1. **Agreed (auto-proceed)** — Points all responding models converge on. High confidence. These form the core of the plan.
+2. **Split decisions (resolved by majority)** — Disagreements where 2+ models agree on one position. State the majority position as the decision. Note the minority dissent with one sentence explaining why it was not chosen.
+3. **Flagged risks** — Anything any model flagged as dangerous, risky, or requiring special attention. Include even if only one model raised it.
+4. **Primary intent / user story** — What the feature is for, who uses it, what problem it solves.
+5. **Key technical concepts** — Architecture components, data structures, APIs, patterns.
+6. **Files and code** — Specific file paths, function signatures, code snippets, data structures mentioned.
+7. **Implementation approach** — Step-by-step build order, key decisions, dependency ordering.
+8. **Edge cases and pitfalls** — What could go wrong, unusual inputs, race conditions, failure modes.
+9. **Proposed scope** — Final scope statement synthesizing all agreements and majority-resolved splits.
 
 ### Completeness contract
 Every unique technical insight, recommendation, code example, and architectural decision from any response MUST appear in your synthesis. After writing your synthesis, mentally verify: for each model that responded, can every key point from that model be found somewhere in your output? If not, add what's missing.
 
 ### Output rules
-- Do NOT mention which model said what — deliver a single unified answer.
+- Do NOT mention which model said what by name — deliver a single unified answer.
 - Do NOT include meta-commentary, preamble, or explanation of your process.
 - The output must be directly usable by the next pipeline phase.
 - Only include information that can be traced back to one or more of the responses — do not invent new recommendations.
+- Split decisions are resolved by majority (2-of-3). The pipeline does not pause for user approval at this stage — the minority dissent is documented for later review.
 PROMPT;
 
     $judgeTimeout = calculate_timeout($metaPrompt, true);

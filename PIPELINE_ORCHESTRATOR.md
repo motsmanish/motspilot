@@ -181,14 +181,39 @@ Not every phase needs the full output of every previous phase. To manage context
 | Current Phase | Include full text | Include summary only |
 |---------------|-------------------|----------------------|
 | Architecture | requirements, consensus | — |
-| Development | requirements, architecture | consensus (key points only) |
-| Testing | development summary | architecture (File Map section only) |
-| Verification | development summary | architecture (File Map only), testing (results only) |
-| Delivery | verification report | development (file list + manual steps only) |
+| Development | requirements, architecture `<summary>` block | consensus (key points only) |
+| Testing | development `<summary>` block | architecture (File Map section only) |
+| Verification | development `<summary>` block | architecture (File Map only), testing (results only) |
+| Delivery | verification `<summary>` block | development (file list + manual steps only) |
 
-**"Summary only"** means: extract only the File Map, test results, and manual steps — not the full narrative. This keeps later phases focused on what they actually need.
+**Directive-not-narrative rule:** Subagent prompts must read like a **work order**, not a diary. When including previous phase output, extract the **state snapshot** — decisions made, files touched, constraints inherited — not the history of iterations. The `<analysis>` block from each phase is the reasoning trail; it stays on disk in the full artifact but is never injected into downstream prompts.
 
-If a subagent needs more context about a previous phase, it can read the artifact file directly from the task directory.
+**"Summary only"** means: extract only the `<summary>` block (or its File Map, test results, and manual steps subsections) — not the full narrative or `<analysis>` block. This keeps later phases focused on what they actually need.
+
+If a subagent needs more context about a previous phase, it can read the full artifact file (including `<analysis>`) directly from the task directory.
+
+---
+
+## Task-Notification Parsing
+
+Every phase subagent emits a `<task-notification>` XML envelope at the end of its response. After each phase completes, check the notification to decide the next action:
+
+```xml
+<task-notification>
+  <status>completed|failed</status>
+  <summary>One-line description</summary>
+  <result>READY|READY WITH NOTES|NOT READY|BLOCKED</result>
+</task-notification>
+```
+
+| `<status>` | `<result>` | Action |
+|-------------|-----------|--------|
+| `completed` | `READY` | Proceed to next phase |
+| `completed` | `READY WITH NOTES` | Proceed (verify notes are IMPROVE-tier only) |
+| `completed` | `NOT READY` | Re-run the phase or escalate to user |
+| `failed` | `BLOCKED` | Show `<summary>` to user, ask for guidance |
+
+If the subagent does not emit a `<task-notification>`, treat it as a warning — check the artifact file and completion checklist manually.
 
 ---
 
@@ -503,6 +528,80 @@ When all phases are approved:
 
    Next: Review deployment steps in tasks/<task-name>/06_delivery.md
    ```
+
+---
+
+## Optional: Parallel Multi-Dimensional Review (Medium/Large Features)
+
+For medium or large features (>5 new files or >300 lines of new code), the orchestrator MAY fan out Architecture and Verification into 3 parallel specialist subagents. This is optional — skip for small features.
+
+### Architecture — 3 lenses
+
+Spawn 3 Task subagents concurrently, each with the same requirements + consensus but a different focus:
+
+1. **Integration fit** — "Does this design match existing patterns? Will it feel native to the codebase?"
+2. **Blast radius** — "What existing code, tables, or features could break if this ships?"
+3. **Testability** — "Can we verify every seam of this design? Where are the testing gaps?"
+
+Wait for all 3 to complete (do NOT cancel siblings on failure — all findings are valuable). Merge their outputs into a single `02_architecture.md`.
+
+### Verification — 3 lenses
+
+1. **Correctness** — "Does the code do what the requirements asked for?"
+2. **Consistency** — "Does the code match what the architecture document promised?"
+3. **Regression** — "Did any existing functionality break in the files that were touched?"
+
+Same merge pattern as Architecture. All 3 must complete before the verdict is synthesized.
+
+### When to use parallel review
+
+Use it when the feature is complex enough that a single reviewer would miss things. Skip it when:
+- The feature is small (<5 files, <300 lines)
+- Token budget is constrained
+- The feature is a bug fix or minor enhancement
+
+---
+
+## Fork vs Spawn Heuristic
+
+When deciding whether to delegate work to a Task subagent during a phase:
+
+**Fork a Task subagent when:**
+- The investigation will read >5 files (protect the main context from the reads)
+- The output is a one-shot answer (e.g., "which files touch the users table?")
+- You can fully state the question before starting
+
+**Do the work inline when:**
+- You need to iterate on intermediate results
+- The user might interrupt or redirect mid-investigation
+- The work involves a single file or simple lookup
+
+---
+
+## Memory Staleness Caveat
+
+When referencing information from motspilot's auto-memory (topic files in the project memory directory), be aware that memories older than 1 day are point-in-time observations, not live state. Claims about code behavior, file:line citations, or architecture decisions may be outdated.
+
+Before acting on a memory that names a specific function, file, or flag:
+- If it names a file path: check the file exists.
+- If it names a function or flag: grep for it.
+- If the user is about to act on your recommendation: verify first.
+
+Run `./motspilot.sh mem-check` to check memory index health (line/byte caps and topic staleness).
+
+---
+
+## Phase Heartbeats
+
+When a phase subagent has been running for more than 30 seconds, emit a brief progress line to the user so long-running phases are observable:
+
+```
+[hh:mm:ss] Architecture phase still running... (reading codebase)
+[hh:mm:ss] Development phase still running... (implementing Layer 2: Logic)
+[hh:mm:ss] Testing phase still running... (writing security tests)
+```
+
+This is not a retry — just progress visibility. One line every ~30 seconds is sufficient.
 
 ---
 
