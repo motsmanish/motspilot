@@ -29,7 +29,7 @@ When the user says "run motspilot pipeline" (or "run motspilot", "go motspilot",
 4. Read the work order: `<workspace>/tasks/<task-name>/pipeline_workorder.md`
 5. Read requirements: `<workspace>/tasks/<task-name>/01_requirements.md`
 6. Check for framework guide: `motspilot/prompts/frameworks/<FRAMEWORK>.md`
-7. **Run Multi-Model Consensus** (Step 1.5 in orchestrator) — fans out requirements to Claude + GPT-4o + Gemini, synthesizes into a 9-section structured format (Agreed/Split/Risks/Scope sections). Split decisions auto-resolve by majority when `AUTO_APPROVE=all`.
+7. **Run Multi-Model Consensus** (Step 1.5 in orchestrator) — fans out requirements to Claude + GPT-4o + Gemini, synthesizes into a 9-section structured format (Agreed/Split/Risks/Scope sections). Split decisions auto-resolve by majority when `AUTO_APPROVE=all`. `CONSENSUS_CLAUDE_MODE=session` (default inside Claude Code) routes the three Claude roles (perspective, synthesis, differences) through Task subagents so they draw from session quota instead of `ANTHROPIC_API_KEY`; `api` runs everything through `bin/consensus.php` directly.
 8. Run each phase as a Task subagent (general-purpose agent type), including consensus output as context
 9. Check `AUTO_APPROVE` in config (default `all` = no pausing; set `none` to pause between phases)
 10. Write outputs to `<workspace>/tasks/<task-name>/`
@@ -71,7 +71,8 @@ pending → in_progress → [auto-archived on completion]
 
 All phase prompts use these patterns (derived from Claude and Gemini best practices):
 
-- **YAML frontmatter** — Every phase prompt starts with YAML metadata (`phase`, `order`, `writes_code`, `artifact`, `requires`, `framework_guide`, `output_scaling`, `allowed_tools`). Parsed by the orchestrator with `yq` (v4.52+).
+- **YAML frontmatter** — Every phase prompt starts with YAML metadata (`phase`, `order`, `writes_code`, `artifact`, `requires`, `framework_guide`, `output_scaling`, `allowed_tools`, `model`). Parsed by the orchestrator with `yq` (v4.52+).
+- **Per-phase model routing** — The `model:` frontmatter field (`opus` | `sonnet` | `haiku`) is passed through to the Task tool when spawning the phase subagent. Defaults: Architecture → `opus` (design trade-offs, blast-radius reasoning); Development / Testing / Verification / Delivery → `sonnet` (routine code generation + mechanical checks). Consensus is unaffected (`bin/consensus.php` owns its own model choices).
 - **`<hard_constraints>` block** — Non-negotiable rules at the top of every phase prompt — the first content the AI reads. Prevents the most damaging failure modes before any creative work begins.
 - **`<analysis>` / `<summary>` output split** — Every phase produces two XML blocks. `<analysis>` is scratch work (stays on disk, not forwarded to downstream phases). `<summary>` is the clean deliverable that downstream phases read.
 - **XML-tagged prompt assembly** — Orchestrator uses `<thinking_framework>`, `<requirements>`, `<consensus>`, `<previous_phases>`, `<task>` tags

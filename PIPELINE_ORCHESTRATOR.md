@@ -44,6 +44,11 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
 
 **Skip check:** If `CONSENSUS="disabled"` in `.motspilot/config`, skip this entire step and proceed directly to Step 2. Log: `Multi-Model Consensus: SKIPPED (disabled in config)`. The pipeline works normally without consensus — the 5 core phases don't depend on it.
 
+**Mode check:** Read `CONSENSUS_CLAUDE_MODE` from `.motspilot/config` (default `session` if unset). This controls how Claude's three consensus roles (perspective → `01_claude.md`, synthesis → `04_synthesis.md`, differences → `05_differences.md`) are produced:
+
+- `session` — `bin/consensus.php --external-only` fans out to GPT-4o + Gemini only; the orchestrator spawns three Task subagents (`model: sonnet`, `subagent_type: general-purpose`) to produce the three Claude-side files. Claude work draws from session quota instead of `ANTHROPIC_API_KEY`.
+- `api` — `bin/consensus.php` does everything itself via direct Anthropic API calls (legacy). Requires `ANTHROPIC_API_KEY` in `.motspilot/.env` or env.
+
 ### How to run it
 
 1. Build a consensus prompt from the requirements. Write it to a temporary file:
@@ -73,8 +78,16 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
    Project root: [PROJECT_ROOT]
    ```
 
-2. Run the standalone consensus script via Bash:
+2. Run the standalone consensus script via Bash. Add the `--external-only` flag when `CONSENSUS_CLAUDE_MODE=session`:
+
    ```bash
+   # session mode (default inside Claude Code):
+   php bin/consensus.php --external-only \
+     --prompt-file=<workspace>/tasks/<task-name>/consensus/prompt.txt \
+     --phase=pre-pipeline \
+     --output-dir=<workspace>/tasks/<task-name>/consensus/
+
+   # api mode (legacy):
    php bin/consensus.php \
      --prompt-file=<workspace>/tasks/<task-name>/consensus/prompt.txt \
      --phase=pre-pipeline \
@@ -82,20 +95,33 @@ Before starting the subagent phases, run the **Multi-Model Consensus** step. Thi
    ```
 
 3. Check the exit code:
-   - **Exit 0**: Success. The `consensus/` folder now contains all outputs.
+   - **Exit 0**: Success. The `consensus/` folder contains the external-model outputs. In `session` mode it holds `02_gpt4o.md` + `03_gemini.md` (claude / synthesis / differences are produced in step 2a below). In `api` mode it holds all five files.
    - **Exit 1**: All APIs failed. Log a warning, show the user `consensus/consensus.log`, and continue without consensus (the pipeline still works, just without the multi-model head start).
-   - **Exit 2**: Bad config (missing .env or prompt). Show the error from `consensus/consensus.log` and ask the user to fix it, or continue without consensus.
+   - **Exit 2**: Bad config (missing keys or prompt). Show the error from `consensus/consensus.log` and ask the user to fix it, or continue without consensus.
 
-4. Log status to the user:
+2a. **Session mode only — run the three Claude-side jobs via Task subagents.** Skip this if `CONSENSUS_CLAUDE_MODE=api`. All three subagents use `subagent_type: general-purpose` and `model: sonnet`. Run them sequentially (jobs 2 and 3 need jobs 1-2's outputs).
+
+   - **Job 1 — Claude perspective.** Prompt:
+     > Read the requirements at `<workspace>/tasks/<task-name>/01_requirements.md`. Respond to the author's request from your own perspective as a senior engineer. Focus on implementation trade-offs, hidden risks, and what a pragmatic first slice looks like. Plain markdown, no preamble. Write your response to `<workspace>/tasks/<task-name>/consensus/01_claude.md` using the Write tool.
+
+   - **Job 2 — Synthesis.** After jobs 1 + external-only consensus have written `01_claude.md`, `02_gpt4o.md`, `03_gemini.md`, spawn a subagent with this prompt (reuses the `synthesize()` meta-prompt from `bin/consensus.php`):
+     > You are merging three independent analyses into a unified synthesis. Read `01_claude.md`, `02_gpt4o.md`, `03_gemini.md` from `<workspace>/tasks/<task-name>/consensus/`. Produce a 9-section synthesis using this exact structure: **1. Agreed Architecture**, **2. Agreed Implementation Order**, **3. Split Decisions** (decisions where the three AIs differ — state each option with which AI proposed it), **4. Agreed Risks**, **5. Unique Risks** (risks only one AI raised), **6. Agreed Scope**, **7. Scope Conflicts**, **8. Open Questions**, **9. Recommended Starting Point** (concrete 1-2 paragraph plan). Cite which AI(s) contributed each point. Write the result to `<workspace>/tasks/<task-name>/consensus/04_synthesis.md`.
+
+   - **Job 3 — Differences analysis.** Prompt (reuses the `analyze_differences()` meta-prompt):
+     > Read `01_claude.md`, `02_gpt4o.md`, `03_gemini.md` from `<workspace>/tasks/<task-name>/consensus/`. For each AI, list only the points it raised that the other two did NOT. Ignore overlap. Flag direct conflicts between AIs explicitly. Organize as three sections (`## Claude`, `## GPT-4o`, `## Gemini`), each with a bulleted list of unique contributions. Close with a `## Conflicts` section if any of the three contradict each other. Write to `<workspace>/tasks/<task-name>/consensus/05_differences.md`.
+
+   Each subagent writes its file directly; do not pipe content back through the orchestrator. After all three finish, the `consensus/` folder matches the legacy layout and downstream phases read it unchanged.
+
+4. Log status to the user (the same shape regardless of mode — session mode just sources Claude's response from a Task subagent instead of an Anthropic API call):
    ```
-   Multi-Model Consensus: [OK — 3/3 models responded | PARTIAL — 2/3 models responded | SKIPPED — see consensus.log]
+   Multi-Model Consensus: [OK — 3/3 models responded | PARTIAL — 2/3 models responded | SKIPPED — see consensus.log]  (mode: session | api)
    Consensus files saved to: <workspace>/tasks/<task-name>/consensus/
      01_claude.md      — Claude raw response
      02_gpt4o.md       — GPT-4o raw response
      03_gemini.md      — Gemini raw response
      04_synthesis.md   — Unified synthesis (all 3 merged)
      05_differences.md — Unique contributions per AI
-     consensus.log     — Execution log
+     consensus.log     — Execution log (external-model calls only in session mode)
    ```
 
 ### Consensus output files explained
@@ -129,6 +155,22 @@ Honor the **start from phase** value from the work order — skip earlier phases
 ### How to Execute a Phase
 
 For each phase, use the **Task tool** (`subagent_type: general-purpose`).
+
+**Pick the model per phase from the prompt's YAML frontmatter.** Each `prompts/<phase>.md` file declares a `model:` field (e.g. `model: opus`, `model: sonnet`). Read that field and pass it to the Task tool as the `model` parameter. Extract it with `yq`:
+
+```bash
+yq '.model // "sonnet"' prompts/<phase>.md
+```
+
+If the field is missing, default to `sonnet`. Current defaults:
+
+| Phase         | Model   | Why                                                         |
+|---------------|---------|-------------------------------------------------------------|
+| Architecture  | opus    | Design trade-offs, 5-30 unit decomposition, blast radius    |
+| Development   | sonnet  | Routine code generation against a decided architecture      |
+| Testing       | sonnet  | Structured test scaffolding, mechanical                     |
+| Verification  | sonnet  | Grep-driven consistency checks, quote-grounded findings     |
+| Delivery      | sonnet  | Smoke-test execution + operator handoff                     |
 
 **Assemble the subagent prompt from these parts, using XML tags for unambiguous parsing:**
 

@@ -78,8 +78,13 @@ function parse_args(array $argv): array {
         'judge-model' => 'claude-sonnet-4-20250514',
         'env-file' => '',
         'output-dir' => '',
+        'external-only' => false,
     ];
     foreach (array_slice($argv, 1) as $arg) {
+        if ($arg === '--external-only') {
+            $opts['external-only'] = true;
+            continue;
+        }
         if (preg_match('/^--([a-z-]+)=(.+)$/s', $arg, $m)) {
             $opts[$m[1]] = $m[2];
         }
@@ -502,7 +507,13 @@ function main(array $argv): int {
     }
 
     // Secret precedence: env vars (userConfig + shell) → .env files in candidate order.
-    $envKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY'];
+    $externalOnly = (bool) $opts['external-only'];
+
+    // In --external-only mode, the orchestrator runs Claude's three roles (perspective,
+    // synthesis, differences) via Task subagents — ANTHROPIC_API_KEY is not required here.
+    $envKeys = $externalOnly
+        ? ['OPENAI_API_KEY', 'GEMINI_API_KEY']
+        : ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY'];
     $keys = [];
 
     foreach ($envKeys as $k) {
@@ -581,6 +592,12 @@ function main(array $argv): int {
 
     [$responses, $failed] = fan_out($prompt, $keys, $fanoutTimeout, $logFile);
 
+    if ($externalOnly) {
+        // Claude is intentionally not queried here — the orchestrator writes 01_claude.md
+        // via a Task subagent. Drop the auto-skip entry so it doesn't appear as "failed".
+        unset($responses['claude'], $failed['claude']);
+    }
+
     $succeeded = array_filter($responses, fn($r) => $r !== null);
     if (count($succeeded) === 0) {
         stderr('ALL APIs failed. Cannot synthesize.', $logFile);
@@ -616,63 +633,80 @@ function main(array $argv): int {
 
     // ── Phase 2: Synthesize all responses ──────────────────────────────────
 
-    $synthesis = synthesize(
-        $responses,
-        $prompt,
-        $phase,
-        $judgeModel,
-        $keys['ANTHROPIC_API_KEY'] ?? '',
-        $logFile
-    );
+    $synthesis = null;
+    if (!$externalOnly) {
+        $synthesis = synthesize(
+            $responses,
+            $prompt,
+            $phase,
+            $judgeModel,
+            $keys['ANTHROPIC_API_KEY'] ?? '',
+            $logFile
+        );
 
-    if ($outputDir !== '' && $synthesis !== null) {
-        $header = "# Multi-Model Consensus — Synthesis\n\n";
-        $header .= "> Phase: {$phase}\n";
-        $header .= "> Models: " . implode(', ', array_keys($succeeded)) . "\n";
-        $header .= "> Judge: {$judgeModel}\n";
-        $header .= "> Generated: " . date('Y-m-d H:i:s') . "\n\n---\n\n";
-        save_file(rtrim($outputDir, '/') . '/04_synthesis.md', $header . $synthesis . "\n");
-        stderr('Saved: 04_synthesis.md', $logFile);
+        if ($outputDir !== '' && $synthesis !== null) {
+            $header = "# Multi-Model Consensus — Synthesis\n\n";
+            $header .= "> Phase: {$phase}\n";
+            $header .= "> Models: " . implode(', ', array_keys($succeeded)) . "\n";
+            $header .= "> Judge: {$judgeModel}\n";
+            $header .= "> Generated: " . date('Y-m-d H:i:s') . "\n\n---\n\n";
+            save_file(rtrim($outputDir, '/') . '/04_synthesis.md', $header . $synthesis . "\n");
+            stderr('Saved: 04_synthesis.md', $logFile);
+        }
     }
 
     // ── Phase 3: Analyze unique contributions / differences ────────────────
 
-    $differences = analyze_differences(
-        $responses,
-        $prompt,
-        $judgeModel,
-        $keys['ANTHROPIC_API_KEY'] ?? '',
-        $logFile
-    );
+    if (!$externalOnly) {
+        $differences = analyze_differences(
+            $responses,
+            $prompt,
+            $judgeModel,
+            $keys['ANTHROPIC_API_KEY'] ?? '',
+            $logFile
+        );
 
-    if ($outputDir !== '' && $differences !== null) {
-        $header = "# Multi-Model Differences — Unique Contributions\n\n";
-        $header .= "> Phase: {$phase}\n";
-        $header .= "> Models compared: " . implode(', ', array_keys($succeeded)) . "\n";
-        $header .= "> Generated: " . date('Y-m-d H:i:s') . "\n\n---\n\n";
-        save_file(rtrim($outputDir, '/') . '/05_differences.md', $header . $differences . "\n");
-        stderr('Saved: 05_differences.md', $logFile);
+        if ($outputDir !== '' && $differences !== null) {
+            $header = "# Multi-Model Differences — Unique Contributions\n\n";
+            $header .= "> Phase: {$phase}\n";
+            $header .= "> Models compared: " . implode(', ', array_keys($succeeded)) . "\n";
+            $header .= "> Generated: " . date('Y-m-d H:i:s') . "\n\n---\n\n";
+            save_file(rtrim($outputDir, '/') . '/05_differences.md', $header . $differences . "\n");
+            stderr('Saved: 05_differences.md', $logFile);
+        }
     }
 
     // ── Summary ────────────────────────────────────────────────────────────
 
     if ($outputDir !== '') {
-        $summary  = sprintf("%d of 3 models responded", count($succeeded));
+        $expected = $externalOnly ? 2 : 3;
+        $summary  = sprintf("%d of %d models responded", count($succeeded), $expected);
         $summary .= empty($failed) ? '' : sprintf(' (failed: %s)', implode(', ', array_keys($failed)));
         stderr('', $logFile);
-        stderr('=== CONSENSUS COMPLETE ===', $logFile);
+        stderr($externalOnly
+            ? '=== EXTERNAL-ONLY CONSENSUS COMPLETE ==='
+            : '=== CONSENSUS COMPLETE ===', $logFile);
         stderr($summary, $logFile);
         stderr("Files written to: {$outputDir}", $logFile);
-        stderr('  01_claude.md      — Claude raw response', $logFile);
+        if (!$externalOnly) {
+            stderr('  01_claude.md      — Claude raw response', $logFile);
+        }
         stderr('  02_gpt4o.md       — GPT-4o raw response', $logFile);
         stderr('  03_gemini.md      — Gemini raw response', $logFile);
-        stderr('  04_synthesis.md   — Unified synthesis', $logFile);
-        stderr('  05_differences.md — Unique contributions per AI', $logFile);
+        if ($externalOnly) {
+            stderr('  (01_claude.md, 04_synthesis.md, 05_differences.md produced by the orchestrator.)', $logFile);
+        } else {
+            stderr('  04_synthesis.md   — Unified synthesis', $logFile);
+            stderr('  05_differences.md — Unique contributions per AI', $logFile);
+        }
         stderr('  consensus.log     — Execution log', $logFile);
     }
 
-    // Write synthesis to stdout for backward compatibility / piping
-    if ($synthesis !== null) {
+    // Write best-available content to stdout for piping.
+    if ($externalOnly) {
+        $fallback = $responses['gpt4o'] ?? $responses['gemini'] ?? '';
+        fwrite(STDOUT, (string) $fallback);
+    } elseif ($synthesis !== null) {
         fwrite(STDOUT, $synthesis);
     } else {
         stderr('Synthesis failed. Outputting best raw response as fallback.', $logFile);

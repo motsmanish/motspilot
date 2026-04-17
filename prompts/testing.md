@@ -7,6 +7,7 @@ requires: [01_requirements.md, 02_architecture.md, 03_development.md]
 framework_guide: required
 output_scaling: [small, medium, large]
 allowed_tools: [Read, Grep, Glob, Edit, Write, Bash]
+model: sonnet
 ---
 
 <hard_constraints>

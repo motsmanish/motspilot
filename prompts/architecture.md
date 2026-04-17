@@ -7,6 +7,7 @@ requires: [01_requirements.md, 00_consensus.md]
 framework_guide: required
 output_scaling: [small, medium, large]
 allowed_tools: [Read, Grep, Glob, Bash(git log:*), Bash(git diff:*), Bash(git show:*)]
+model: opus
 ---
 
 <hard_constraints>

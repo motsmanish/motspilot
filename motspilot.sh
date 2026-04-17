@@ -288,6 +288,12 @@ WORKSPACE_DIR=""
 # /mots:init sets this automatically based on dependency detection.
 CONSENSUS="enabled"
 
+# How Claude's three consensus roles (perspective, synthesis, differences) run:
+#   session = via Claude Code Task subagents (uses your session quota, no ANTHROPIC_API_KEY needed)
+#   api     = via direct Anthropic API in bin/consensus.php (requires ANTHROPIC_API_KEY)
+# OPENAI_API_KEY and GEMINI_API_KEY are required in both modes.
+CONSENSUS_CLAUDE_MODE="session"
+
 # Config format version — used by /mots:init to detect stale configs and offer migration.
 CONFIG_VERSION="1"
 EOF

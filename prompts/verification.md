@@ -7,6 +7,7 @@ requires: [01_requirements.md, 02_architecture.md, 03_development.md, 04_testing
 framework_guide: required
 output_scaling: [small, medium, large]
 allowed_tools: [Read, Grep, Glob, Bash(test runner:*), Bash(git:*), Bash(php -l:*)]
+model: sonnet
 ---
 
 <hard_constraints>
