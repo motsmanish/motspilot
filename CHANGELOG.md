@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-17
+
+### Added
+- **Per-phase model routing** — phase prompts now declare a `model:` YAML frontmatter field. The orchestrator reads it with `yq` and passes it to the Task tool so each phase runs on the right model. Defaults: Architecture → `opus` (design trade-offs, blast-radius reasoning); Development / Testing / Verification / Delivery → `sonnet` (routine code generation + mechanical checks). Stretches Opus session quota without hurting output quality where it matters.
+- **Session-mode consensus** — new `CONSENSUS_CLAUDE_MODE` config key with two modes:
+  - `session` (default inside Claude Code) — `bin/consensus.php --external-only` fans out to GPT-4o + Gemini only; the orchestrator spawns three Sonnet Task subagents for Claude's consensus roles (perspective → `01_claude.md`, synthesis → `04_synthesis.md`, differences → `05_differences.md`). Claude work draws from session quota; `ANTHROPIC_API_KEY` is no longer required for consensus.
+  - `api` (legacy) — `bin/consensus.php` handles everything via direct Anthropic API calls. Requires `ANTHROPIC_API_KEY`.
+- `bin/consensus.php` gains a `--external-only` flag that skips the Claude fan-out and both judge calls, drops `ANTHROPIC_API_KEY` from the required-key set, and reports `=== EXTERNAL-ONLY CONSENSUS COMPLETE ===`.
+
+### Changed
+- `/mots:init` adapts required-key checks to `CONSENSUS_CLAUDE_MODE`: only `OPENAI_API_KEY` + `GEMINI_API_KEY` are required in session mode. Claude Code's `ANTHROPIC_API_KEY` stripping is now reported as "ready (mode: session)" instead of a problem.
+- Default `.motspilot/config` written by `motspilot.sh` now includes `CONSENSUS_CLAUDE_MODE="session"`.
+- `plugin.json` userConfig description for `ANTHROPIC_API_KEY` clarifies it's only needed in `api` mode.
+
 ## [1.1.0] - 2026-04-16
 
 ### Added
