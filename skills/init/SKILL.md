@@ -27,6 +27,8 @@ Set up motspilot in the current project directory.
 
 5. **Set up consensus (interactive — must block and wait):**
 
+   This step runs on EVERY `/mots:init`, including re-runs on an already-configured project. Do NOT short-circuit with "config is already configured, nothing to do" — the whole point of re-running `/mots:init` is usually that the user just added keys and wants consensus enabled. Always perform the checks below, always re-evaluate `CONSENSUS`, and always prompt via `AskUserQuestion` when keys are missing.
+
    Check if consensus can run:
    - Run `php --version` — is PHP 8.0+ available?
    - Check process env for `$ANTHROPIC_API_KEY`, `$OPENAI_API_KEY`, `$GEMINI_API_KEY`.

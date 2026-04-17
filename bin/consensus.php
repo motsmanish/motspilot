@@ -242,7 +242,6 @@ function fan_out(string $prompt, array $keys, int $timeout, ?string $logFile = n
         $curlError = $curlErrno !== CURLE_OK ? (curl_strerror($curlErrno) ?: curl_error($ch)) : curl_error($ch);
 
         curl_multi_remove_handle($mh, $ch);
-        curl_close($ch);
 
         if ($curlError !== '') {
             $reason = match ($curlErrno) {
@@ -314,7 +313,6 @@ function call_claude_judge(string $prompt, string $apiKey, string $model, int $t
     $raw       = curl_exec($ch);
     $httpCode  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
-    curl_close($ch);
 
     if ($curlError !== '') {
         stderr("Judge cURL error: {$curlError}", $logFile);
@@ -332,7 +330,7 @@ function call_claude_judge(string $prompt, string $apiKey, string $model, int $t
 
 // ─── Synthesis ──────────────────────────────────────────────────────────────
 
-function synthesize(array $responses, string $originalPrompt, string $phaseName, string $judgeModel, string $anthropicKey, int $baseTimeout, ?string $logFile = null): ?string {
+function synthesize(array $responses, string $originalPrompt, string $phaseName, string $judgeModel, string $anthropicKey, ?string $logFile = null): ?string {
     $sections = build_response_sections($responses);
 
     $metaPrompt = <<<PROMPT
@@ -393,7 +391,7 @@ PROMPT;
 
 // ─── Differences analysis ───────────────────────────────────────────────────
 
-function analyze_differences(array $responses, string $originalPrompt, string $judgeModel, string $anthropicKey, int $baseTimeout, ?string $logFile = null): ?string {
+function analyze_differences(array $responses, string $originalPrompt, string $judgeModel, string $anthropicKey, ?string $logFile = null): ?string {
     $succeeded = array_filter($responses, fn($r) => $r !== null);
     if (count($succeeded) < 2) {
         stderr('Need at least 2 responses to analyze differences.', $logFile);
@@ -624,7 +622,6 @@ function main(array $argv): int {
         $phase,
         $judgeModel,
         $keys['ANTHROPIC_API_KEY'] ?? '',
-        $fanoutTimeout,
         $logFile
     );
 
@@ -645,7 +642,6 @@ function main(array $argv): int {
         $prompt,
         $judgeModel,
         $keys['ANTHROPIC_API_KEY'] ?? '',
-        $fanoutTimeout,
         $logFile
     );
 
