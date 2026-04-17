@@ -489,18 +489,24 @@ function build_response_sections(array $responses): string {
 function main(array $argv): int {
     $opts = parse_args($argv);
 
-    // Resolve .env file path
-    $envFile = $opts['env-file'];
-    if ($envFile === '') {
-        $envFile = dirname(__DIR__) . '/.env';
+    // Build ordered list of .env candidate paths.
+    // Claude Code strips ANTHROPIC_API_KEY from its process env when the user
+    // declines the "use this key for your session" prompt at startup, so the
+    // per-project .motspilot/.env is the most reliable source for that key.
+    $cwd = getcwd() ?: '.';
+    $envCandidates = [];
+    if ($opts['env-file'] !== '') {
+        $envCandidates[] = $opts['env-file'];
+    } else {
+        $envCandidates[] = $cwd . '/.motspilot/.env';
+        $envCandidates[] = $cwd . '/.env';
+        $envCandidates[] = dirname(__DIR__) . '/.env';
     }
 
-    // Secret precedence: userConfig (env vars from Claude Code) → shell env vars → .env file
-    // Claude Code exports userConfig values as environment variables to subprocesses.
+    // Secret precedence: env vars (userConfig + shell) → .env files in candidate order.
     $envKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY'];
     $keys = [];
 
-    // 1. Check environment variables first (covers both userConfig and shell exports)
     foreach ($envKeys as $k) {
         $val = getenv($k);
         if ($val !== false && $val !== '') {
@@ -508,8 +514,13 @@ function main(array $argv): int {
         }
     }
 
-    // 2. Fall back to .env file for any missing keys
-    if (count($keys) < count($envKeys)) {
+    foreach ($envCandidates as $envFile) {
+        if (count($keys) >= count($envKeys)) {
+            break;
+        }
+        if (!is_file($envFile)) {
+            continue;
+        }
         $fileKeys = load_env($envFile);
         foreach ($envKeys as $k) {
             if (!isset($keys[$k]) && isset($fileKeys[$k])) {
@@ -519,8 +530,8 @@ function main(array $argv): int {
     }
 
     if (empty($keys)) {
-        stderr("No API keys found. Checked environment variables and {$envFile}");
-        stderr('Provide keys via: (1) Claude Code userConfig, (2) shell environment variables, or (3) .env file');
+        stderr('No API keys found. Checked environment variables and: ' . implode(', ', $envCandidates));
+        stderr('Provide keys via: (1) Claude Code userConfig, (2) shell environment variables, or (3) .motspilot/.env file in your project');
         return 2;
     }
 
