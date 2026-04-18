@@ -319,9 +319,9 @@ slugify() {
 
 validate_task_name() {
     local name="$1"
-    if [[ ! "$name" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$ ]]; then
+    if [[ ! "$name" =~ ^[a-z0-9][a-z0-9._-]*[a-z0-9]$|^[a-z0-9]$ ]]; then
         log ERROR "Invalid task name: '${name}'"
-        log INFO "Use lowercase letters, numbers, and hyphens only (e.g. add-csv-export)"
+        log INFO "Use lowercase letters, numbers, '-', '_', or '.' only; must start and end with a letter or digit (e.g. add-csv-export, 01e_owasp-8.2.3-input-validation)"
         return 1
     fi
 }

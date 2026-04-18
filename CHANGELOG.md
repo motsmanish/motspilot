@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `motspilot.sh` task-name validation now allows `_` and `.` in the interior of task names (e.g. `01e_owasp-8.2.3-input-validation`). Start/end must still be `[a-z0-9]`.
+
 ## [1.2.0] - 2026-04-17
 
 ### Added
