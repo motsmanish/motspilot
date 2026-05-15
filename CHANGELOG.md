@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-05-15
+
 ### Changed
+- **Consensus default Claude model bumped from Sonnet 4 to Sonnet 4.6** (`claude-sonnet-4-20250514` → `claude-sonnet-4-6`). Sonnet 4 is being retired on the Anthropic API on 2026-06-15; this avoids service interruption for `CONSENSUS_CLAUDE_MODE=api` and the standalone `bin/consensus.php` script. `session` mode is unaffected — it routes Claude work through Claude Code Task subagents, which the harness resolves to current models.
 - `motspilot.sh` task-name validation now allows `_` and `.` in the interior of task names (e.g. `01e_owasp-8.2.3-input-validation`). Start/end must still be `[a-z0-9]`.
+
+### Added
+- `CONSENSUS_CLAUDE_MODEL` environment variable in `bin/consensus.php` — overrides the default Claude model used for both the fan-out call and the synthesis/differences judge calls. Lets you upgrade past future deprecations without a code edit.
 
 ## [1.2.0] - 2026-04-17
 

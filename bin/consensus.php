@@ -70,12 +70,20 @@ function load_env(string $path): array {
     return $vars;
 }
 
+function default_claude_model(): string {
+    $env = getenv('CONSENSUS_CLAUDE_MODEL');
+    if ($env !== false && trim($env) !== '') {
+        return trim($env);
+    }
+    return 'claude-sonnet-4-6';
+}
+
 function parse_args(array $argv): array {
     $opts = [
         'prompt' => '',
         'prompt-file' => '',
         'phase' => 'general',
-        'judge-model' => 'claude-sonnet-4-20250514',
+        'judge-model' => default_claude_model(),
         'env-file' => '',
         'output-dir' => '',
         'external-only' => false,
@@ -118,7 +126,7 @@ function build_claude_request(string $prompt, string $apiKey): array {
             'anthropic-version: 2023-06-01',
         ],
         json_encode([
-            'model'      => 'claude-sonnet-4-20250514',
+            'model'      => default_claude_model(),
             'max_tokens' => 8192,
             'messages'   => [['role' => 'user', 'content' => $prompt]],
         ], JSON_THROW_ON_ERROR),
