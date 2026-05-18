@@ -186,13 +186,15 @@ Tasks auto-archive when the delivery phase is approved. You never lose the artif
 
 ## Pipeline Phases
 
+You write the requirements. motspilot runs 6 AI phases:
+
 ```
-Requirements → Architecture → Development → Testing → Verification → Delivery
+Requirements (input) → Consensus → Architecture → Development → Testing → Verification → Delivery
 ```
 
 | # | Phase | What it does | Writes code? |
 |---|-------|-------------|--------------|
-| 1 | Requirements | You write this | No |
+| 1 | Consensus | Fans out the requirements to Claude + GPT-4o + Gemini, synthesizes a starting point | No |
 | 2 | Architecture | Explores codebase, designs feature, traces blast radius | No |
 | 3 | Development | Implements the feature — schema, models, controllers, views | Yes |
 | 4 | Testing | Writes comprehensive tests (security-first) | Yes |
