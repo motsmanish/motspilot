@@ -201,33 +201,9 @@ Requirements (input) → Consensus → Architecture → Development → Testing 
 | 5 | Verification | Senior code review — security, correctness, framework patterns | No |
 | 6 | Delivery | Executes smoke tests, deployment steps, rollback plan, git commit message | No |
 
-Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Every phase prompt includes YAML frontmatter (parsed by `yq`) and a `<hard_constraints>` block of non-negotiable rules as the first content the AI reads. Prompt engineering techniques applied across all phases:
+Each phase uses a **thinking framework** (in `prompts/`) — not a checklist. Every phase prompt includes YAML frontmatter (parsed by `yq`), a `<hard_constraints>` block of non-negotiable rules read before any creative work, and a structured 12-item `<completion_checklist>` the phase must self-report against. Downstream phases consume tight `<summary>` blocks, not full reasoning history. Verification quotes file:line evidence; Delivery executes smoke tests with both entry-point and side-effect checks before marking a task complete.
 
-- **YAML frontmatter** — Machine-readable metadata on every prompt (`phase`, `order`, `writes_code`, `artifact`, `requires`, `framework_guide`, `output_scaling`, `allowed_tools`)
-- **`<hard_constraints>` block** — Non-negotiable rules at the top of every prompt, read before any creative work begins
-- **`<analysis>` / `<summary>` output split** — Every phase produces two XML blocks. `<analysis>` is scratch work (stays on disk). `<summary>` is the clean deliverable downstream phases read. Context forwarding uses summaries, not full reasoning history.
-- **XML-tagged prompt assembly** — Orchestrator wraps each section (`<thinking_framework>`, `<requirements>`, `<previous_phases>`, etc.) in XML tags for unambiguous parsing
-- **Investigate-before-acting guards** — `<investigate_before_designing>`, `<investigate_before_coding>`, etc. prevent speculation about unread code
-- **Anti-overengineering clauses** — Explicit `<anti_overengineering>` blocks prevent scope creep and premature abstraction
-- **Phase-specific completion checklists** — Every phase ends with a structured 12-item `<completion_checklist>` block (replacing the older prose `<self_check>`). Each subagent emits results in its phase output as `[x] done — evidence`, `[N/A] — justification`, or `[ ] not done — reason`. Unchecked items, missing evidence, and unjustified N/A count as the phase being incomplete.
-- **`<tool_affinity>` rules** — Development and framework guides route AI toward correct tools (Grep over `Bash(grep)`, Edit over `Bash(sed)`, etc.)
-- **`<one_in_progress>` rule** — Development enforces one WIP item at a time. Each layer includes a `**Success signal:**` defining when to advance.
-- **Few-shot examples** — `<example>` blocks demonstrate good vs bad output patterns
-- **Completeness contracts** — Verification must read every file; development must complete every planned file
-- **Assumption-gating** — Ambiguous requirements must be stated explicitly, never silently filled in
-- **Quote-grounded findings** — Verification must quote specific code lines before making judgments. Findings without file:line + code evidence are invalid.
-- **Confidence scoring** — Every Verification finding carries a confidence score (1-10). Below 7 demotes to NOTE (non-blocking). A dated `<hard_exclusions>` list suppresses known false-positive patterns.
-- **Adversarial anti-patterns** — Verification guards against verification avoidance and "seduced by 80%" failure modes, with `<before_pass>` and `<before_fail>` checklists.
-- **Terse verdict first** — Verification's `<summary>` starts with `VERDICT: READY | READY WITH NOTES | NOT READY — <reason>` as its first line.
-- **Constants discipline** — Development greps for existing constants before coding domain values (statuses, tiers, roles); Verification flags duplicated or missing constants as SHOULD FIX
-- **MUST FIX (untested seam) severity tier** — Verification uses **CRITICAL / MUST FIX (untested seam) / SHOULD FIX / IMPROVE**. The MUST FIX tier is non-downgradeable and applies to any runtime code path that exists in the shipped change but is not exercised by any test. It cannot be deferred as a follow-up note. `READY WITH NOTES` is restricted to IMPROVE-tier notes only.
-- **Verification consistency checks** — Verification runs four mechanical grep-level checks across artifacts and source: data-value consistency (constants/enums/columns/config keys agree across docs and code), symbol-name consistency, timezone consistency for time-bucketed columns (write-side and read-side must agree), and event-name consistency for pub/sub (every listener has a matching dispatch site in the target codebase, not only in `vendor/`).
-- **Smoke-test execution gate (Delivery)** — The delivery phase **executes** every smoke test before marking the task complete. Each smoke test requires BOTH an entry-point check (HTTP status, CLI exit, queue arrival) AND a side-effect check (DB row, mail catcher message, file written, cache key updated, external API called). Status-code-only tests count as zero tests. Tests that cannot run in the environment are tagged `[UNEXECUTABLE]` with a one-sentence justification and surfaced for the operator. Smoke tests use dual-form naming (imperative + present-continuous).
-- **Integration-vs-unit hard rule (Testing)** — For any runtime path that runs inside framework plumbing (events, middleware, observers, lifecycle hooks, schedulers, queues), at least one test must exercise the real dispatch mechanism. Reflection-based unit tests directly invoking handler methods are not sufficient. The testing summary must include a runtime-path classification table (pure-logic / plumbing-dependent / external-I/O) so verification can cross-check coverage.
-- **Parallel 3-lens review** — (Optional, medium/large features) Architecture and Verification can fan out into 3 specialist subagents. All 3 complete — no sibling cancellation.
-- **`<task-notification>` envelope** — Every phase emits a structured XML completion signal parsed by the orchestrator.
-- **5-30 unit decomposition** — Architecture decomposes large features into 5-30 discrete implementation units.
-- **Phase heartbeats** — Orchestrator emits progress lines every ~30s during long phases.
+For the full catalogue of patterns applied across phases — structure, reasoning gates, output discipline, severity / confidence / consistency tiers, and cross-phase contracts — see [docs/prompt-engineering.md](docs/prompt-engineering.md).
 
 Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one exists for your framework.
 
