@@ -31,3 +31,6 @@ RESEARCH_PUBLIC_RELEASE.md
 .motspilot/workspace/TASK_SEQUENCE.md
 /motspilot-data/*
 /.claude
+
+# Personal deferred-work parking lot (private, never committed)
+.todo/
