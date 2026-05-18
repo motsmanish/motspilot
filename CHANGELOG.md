@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **Codex plugin manifests** (`.codex-plugin/` and `.agents/`). They were added speculatively in v1.1.0, never linked from the README, never tested in CI, and cost a dual-version-bump at every release. If Codex compatibility comes back as a real demand, the manifests are recoverable from git history.
+
 ## [1.2.1] - 2026-05-15
 
 ### Changed

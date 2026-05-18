@@ -140,10 +140,6 @@ motspilot/                            # Repo root = plugin root
   .claude-plugin/
     plugin.json                       # Plugin manifest (plugin name: "mots")
     marketplace.json                  # Self-hosted marketplace
-  .codex-plugin/
-    plugin.json                       # Codex plugin manifest
-  .agents/plugins/
-    marketplace.json                  # Codex marketplace
   skills/                             # Plugin skills (/mots:*)
     pilot/SKILL.md                    # Main: /mots:pilot
     pipeline/SKILL.md                 # Alias: /mots:pipeline
