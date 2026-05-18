@@ -11,7 +11,7 @@ Each phase has a hard-constraint block the AI reads before any creative work, ev
 **What you write:** a 2–3 line feature description.
 **What it produces:** consensus synthesis → architecture plan with blast-radius analysis → code → tests (security-first) → verification report with confidence-scored findings → executed smoke tests → deployment plan. Each artifact is a file in your repo, so the full decision trail is committable.
 
-<!-- TODO: 30-second asciinema or GIF of one real task — see docs/example-task/ -->
+**See it before installing:** [`docs/example-task/`](docs/example-task/) walks through one feature end-to-end — every artifact from requirements through delivery, including the consensus synthesis, an architecture decomposition, a verification finding with file:line evidence, and executed smoke tests with side-effect checks.
 
 > motspilot is built for engineers integrating into production codebases — not for greenfield prototyping. If your codebase is younger than its first incident, a single-model agent is probably fine.
 
