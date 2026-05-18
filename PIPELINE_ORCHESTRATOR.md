@@ -660,3 +660,11 @@ This is not a retry — just progress visibility. One line every ~30 seconds is 
 - **Delivery smoke test status-code-only (no side-effect check)**: Reject. Re-run delivery with feedback that smoke tests must include both an entry-point check and a side-effect check.
 - **Archive command fails**: Tell the user to run `./motspilot.sh archive --task=<name>` manually
 - **Requirements missing**: Ask user to run `./motspilot.sh go --task=<name> "description"` first
+
+---
+
+## References
+
+- [`VALIDATION.md`](VALIDATION.md) — six synthetic broken-task scenarios mapped to the specific pipeline gate that should catch each one (MUST FIX untested-seam tier, four consistency checks, smoke-test execution gate, integration-vs-unit hard rule, completion checklists). Useful when you need to know what a given gate is *for*.
+- [`docs/prompt-engineering.md`](docs/prompt-engineering.md) — full catalogue of prompt-engineering techniques applied across the phase prompts.
+- [`prompts/_xml_tags.md`](prompts/_xml_tags.md) — canonical XML tag list used in prompt assembly.

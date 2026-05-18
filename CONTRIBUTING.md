@@ -163,6 +163,16 @@ If you're porting patterns from a real project into a guide, scrub all identifie
 
 ---
 
+## Reference Docs
+
+If your contribution touches the phase prompts under `prompts/`:
+
+- [`docs/prompt-engineering.md`](docs/prompt-engineering.md) — full catalogue of techniques applied across phases, grouped by concern.
+- [`VALIDATION.md`](VALIDATION.md) — paper validation of the recent gate-tightening pass. Six synthetic broken-task scenarios mapped to the specific pipeline gates that should catch them (MUST FIX untested-seam tier, four consistency checks, smoke-test execution gate, integration-vs-unit hard rule, completion checklists). Read this before proposing changes to verification, testing, or delivery prompts — it shows what each gate exists to catch.
+- [`prompts/_xml_tags.md`](prompts/_xml_tags.md) — canonical reference for every XML tag the prompts use.
+
+---
+
 ## Response Times
 
 This project is maintained alongside the author's primary work. Please be patient with issue and PR responses — they may take a week or more. If your issue is critical (security, data loss), flag it in the title and it will be prioritized.
