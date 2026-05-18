@@ -181,6 +181,21 @@ Every new route, controller action, event listener, queue consumer, or scheduled
 
 A status-200 response with zero rows in the table the feature was supposed to write to is a BROKEN FEATURE. Write the test accordingly.
 
+**Classify the entry-point before writing the test.** The curl-GET template below only works for read-only routes. For everything else, the entry-point check must trigger the action through its real mechanism — not a substitute that bypasses framework plumbing.
+
+| Touched surface | Entry-point mechanism |
+|---|---|
+| HTTP `GET` action with no state change (listings, detail, dashboards) | `curl` GET, assert status |
+| HTTP `POST` / `PUT` / `DELETE` action | `curl` with method + body + CSRF if required, OR drive the form via the framework's HTTP test client. Status-200 from a GET to the same path proves nothing. |
+| HTTP `GET` action that sends email / charges card / enqueues a job | Treat as state-changing. Trigger via the user-facing flow (form submit, button click), not a bare `curl`. The "GET-safe" classification is wrong if the action has side effects. |
+| Webhook endpoint (`/webhooks/*`, payment gateway callbacks, etc.) | Use the provider's simulator (e.g. `stripe trigger <event>`, signed payload via the provider CLI). A raw `curl` with hand-built payload bypasses signature validation and tests nothing. |
+| Console / shell command | Invoke the command directly. Capture stdout, stderr, exit code. |
+| Cron / scheduled job | Invoke the underlying command directly — do NOT wait for the scheduler. Assert the same side-effect the schedule would produce. |
+| Queue consumer / background worker | Dispatch the job, then run the consumer once synchronously (framework-specific: `queue:work --once`, `bin/cake queue:run --once`, etc.). Don't assert "job dispatched" — assert the handler's side effect. |
+| Event listener / observer / framework hook | Dispatch the real event through the framework. Reflection-style direct calls to the handler method do NOT count (see testing phase's integration-vs-unit hard rule). |
+
+If a smoke test's entry-point is the wrong mechanism for the surface it claims to cover, it doesn't matter how thorough the side-effect check is — the test is invalid.
+
 Generic template (adapt to the project's tooling — see the framework guide for idioms):
 
 ```bash
