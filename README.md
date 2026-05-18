@@ -102,7 +102,9 @@ motspilot works with any framework. Framework-specific knowledge lives in `promp
 | `cakephp.md` | CakePHP 4.x | Shipped |
 | `plain-php.md` | Plain PHP (no framework) | Shipped |
 
-Both shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase), `<framework_tool_affinity>` blocks that route the AI toward correct tool usage, and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules. Without a framework guide, the pipeline still works — it uses framework-agnostic reasoning and discovers patterns from your codebase. Framework guides make the AI's output more precise by providing version-specific API patterns, verification checks, and deployment commands.
+Both shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase), `<framework_tool_affinity>` blocks that route the AI toward correct tool usage, and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules.
+
+Without a guide for your framework, the pipeline runs on framework-agnostic reasoning and discovers patterns from your codebase as it goes. Adding a guide is a one-file contribution — see [Adding a Framework Guide](#adding-a-framework-guide) below.
 
 **Community contributions welcome.** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write a framework guide. Guides for Laravel, Django, Rails, Next.js, Express, and others would be valuable additions.
 
@@ -354,7 +356,7 @@ echo "Design a caching strategy" | php motspilot/bin/consensus.php --phase=gener
 
 **Setup:** Set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `GEMINI_API_KEY` in `motspilot/.env`.
 
-**Fault tolerant:** If 1 or 2 APIs fail, the service proceeds with whatever responses are available. All 3 fail = error. If consensus fails entirely, the pipeline continues without it — it's an enhancement, not a requirement.
+**Fault-tolerant by design:** if 1–2 APIs fail, synthesis proceeds with the remaining responses. If all 3 fail, the pipeline continues without consensus and logs the gap for review. Consensus strengthens the starting point but is not a hard dependency for the rest of the pipeline to run.
 
 **Dynamic timeouts:** API timeouts scale automatically based on prompt length (90s floor, +5s per 1K chars, 300s ceiling). Judge calls get 1.5x. No hardcoded limits — large requirements documents get proportionally more time. Human-readable error messages for timeouts, DNS failures, and connection issues.
 
