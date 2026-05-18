@@ -4,11 +4,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![ShellCheck](https://img.shields.io/badge/ShellCheck-passing-brightgreen)](https://www.shellcheck.net/)
 
-AI-powered feature development pipeline for existing codebases — framework-agnostic.
+A 6-phase AI pipeline for shipping features into *existing* codebases — without the "the agent confidently broke prod" failure mode.
 
-Coordinates five specialized AI agents (architecture, development, testing, verification, delivery) to build features in your existing codebase — safely, with human approval between each phase.
+Each phase has a hard-constraint block the AI reads before any creative work, every verification finding quotes file:line evidence from your code, and a multi-model consensus (Claude + GPT-4o + Gemini) runs before the first design decision. Ships as a Claude Code plugin.
 
-> **Project Status:** This tool was built for my own production work and shared because it may help others. I maintain it alongside my primary work, so response times on issues and PRs may be longer than typical. Community contributions — especially framework guides and bug fixes — are very welcome.
+**What you write:** a 2–3 line feature description.
+**What it produces:** consensus synthesis → architecture plan with blast-radius analysis → code → tests (security-first) → verification report with confidence-scored findings → executed smoke tests → deployment plan. Each artifact is a file in your repo, so the full decision trail is committable.
+
+<!-- TODO: 30-second asciinema or GIF of one real task — see docs/example-task/ -->
+
+> motspilot is built for engineers integrating into production codebases — not for greenfield prototyping. If your codebase is younger than its first incident, a single-model agent is probably fine.
 
 ---
 
@@ -386,6 +391,12 @@ echo "Design a caching strategy" | php motspilot/bin/consensus.php --phase=gener
 - **Security mindset** — think like an attacker at every step
 - **Never greenfield** — always integrating into existing apps, matching existing patterns
 - **One action per migration** — never combine unrelated changes in a single migration
+
+---
+
+## Project Status
+
+motspilot was built for production work I do day-to-day and shared because it may help others doing similar work. It's maintained alongside that primary work — issue and PR response times may be longer than a full-time-staffed project, and community contributions (especially framework guides and bug fixes) are very welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
