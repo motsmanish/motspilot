@@ -2,7 +2,7 @@
 
 ## Architecture
 
-motspilot is a 5-phase AI pipeline for adding features to **existing applications** — framework-agnostic.
+motspilot is a 6-phase AI pipeline (consensus → architecture → development → testing → verification → delivery) for adding features to **existing applications** — framework-agnostic.
 
 **Claude Code IS the orchestrator.** When the user says "run motspilot pipeline", Claude Code coordinates all phases using Task subagents. The shell script (`motspilot.sh`) manages named tasks, file state, and auto-archives on completion.
 

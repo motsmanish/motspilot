@@ -89,7 +89,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup. Alternative integr
 run motspilot pipeline
 ```
 
-Claude Code orchestrates all 5 phases and archives the task automatically when delivery is approved. By default, phases run without pausing (`AUTO_APPROVE="all"`). Set `AUTO_APPROVE="none"` in `.motspilot/config` to approve each phase before it proceeds.
+Claude Code orchestrates all 6 phases (consensus → architecture → development → testing → verification → delivery) and archives the task automatically when delivery is approved. By default, phases run without pausing (`AUTO_APPROVE="all"`). Set `AUTO_APPROVE="none"` in `.motspilot/config` to approve each phase before it proceeds.
 
 ---
 
@@ -101,12 +101,13 @@ motspilot works with any framework. Framework-specific knowledge lives in `promp
 |-------|-----------|--------|
 | `cakephp.md` | CakePHP 4.x | Shipped |
 | `plain-php.md` | Plain PHP (no framework) | Shipped |
+| `laravel.md` | Laravel 11.x+ | Shipped |
 
-Both shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase), `<framework_tool_affinity>` blocks that route the AI toward correct tool usage, and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules.
+All shipped guides include side-effect-asserting smoke-test templates (status-code-only curl is no longer accepted by the delivery phase), `<framework_tool_affinity>` blocks that route the AI toward correct tool usage, and point at `prompts/delivery.md` section 3.2 for the smoke-test execution gate. The plain-PHP guide is structured around two callouts — Shape A (page-file) and Shape B (PDS-skeleton) — and includes webserver isolation rules. The Laravel guide covers Eloquent, Form Requests, Policies, Events/Queues, Pest/PHPUnit, and artisan commands.
 
 Without a guide for your framework, the pipeline runs on framework-agnostic reasoning and discovers patterns from your codebase as it goes. Adding a guide is a one-file contribution — see [Adding a Framework Guide](#adding-a-framework-guide) below.
 
-**Community contributions welcome.** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write a framework guide. Guides for Laravel, Django, Rails, Next.js, Express, and others would be valuable additions.
+**Community contributions welcome.** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write a framework guide. Guides for Django, Rails, Next.js, Express, and others would be valuable additions.
 
 To add support for a new framework, create `prompts/frameworks/<name>.md` and set `FRAMEWORK="<name>"` in `.motspilot/config`.
 
@@ -238,7 +239,9 @@ motspilot/                              # The tool (symlink, submodule, or clone
 │   ├── verification.md                 # Verification thinking framework (YAML frontmatter)
 │   ├── delivery.md                     # Delivery thinking framework (YAML frontmatter)
 │   └── frameworks/                     # Framework-specific guides
-│       └── cakephp.md                  # CakePHP 4.x guide
+│       ├── cakephp.md                  # CakePHP 4.x guide
+│       ├── laravel.md                  # Laravel 11.x+ guide
+│       └── plain-php.md                # Plain PHP (no framework) guide
 └── .motspilot/
     ├── config                          # Project settings (edit this)
     ├── current_task                    # Name of currently active task
