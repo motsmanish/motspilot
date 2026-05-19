@@ -7,8 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Entry-point classification (delivery phase, section 3.1)** — before writing a smoke test, the AI must classify the touched surface (GET-safe action / state-changing HTTP / webhook / CLI / cron / queue / event listener) and pick the matching entry-point shape. The curl-GET template only applies to read-only routes; everything else has a one-line rule for triggering through its real mechanism. Ties back to the testing phase's integration-vs-unit hard rule.
+- **`docs/prompt-engineering.md`** — full catalogue of prompt-engineering patterns used across phases (structure, reasoning gates, output discipline, severity/confidence/consistency tiers, cross-phase contracts). Extracted from the README so the README stays scannable; linked from README, Phases tab of the GitHub Pages site, and CONTRIBUTING.
+- **`docs/example-task/`** — synthetic end-to-end walkthrough of one feature (`csv-export-reports-listing`) with every artifact from requirements through delivery, including a consensus synthesis, an architecture decomposition, a verification finding with file:line evidence, and executed smoke tests with side-effect checks. Linked prominently from the README and the docs site.
+- **Laravel 11.x+ framework guide** (`prompts/frameworks/laravel.md`) documented in README, CLAUDE.md, and the GitHub Pages Frameworks tab. Covers Eloquent, Form Requests, Policies, Events/Queues, Pest/PHPUnit, and artisan commands, with `<framework_tool_affinity>` rules and side-effect-asserting smoke-test templates.
+- VALIDATION.md cross-references added from CONTRIBUTING.md and PIPELINE_ORCHESTRATOR.md (the validation harness now has discoverable entry points from the two docs contributors actually start in).
+- `.gitignore` rule for `.todo/` parking-lot directory (personal deferred-work staging, not shipped).
+
+### Changed
+- **README opener rewritten** to lead with the differentiator framing — "without the 'agent confidently broke prod' failure mode" — and the four pillars (hard-constraint phase gates, file:line-quoted verification, multi-model consensus, executed smoke tests). The Project Status disclaimer moved below the fold so first-time readers see the pitch, not the maintenance-mode caveat.
+- **Pipeline phase count unified to 6 across all surfaces** — README, CLAUDE.md, plugin manifests, marketplace listing, GitHub repo description, and `docs/index.html`. Consensus is now counted as phase 1 of 6 (previously framed as a separate pre-step); Requirements is explicitly "input you write" rather than a numbered phase. Previously the README said "five specialized AI agents" while plugin manifests said "6-phase" and the repo description said "5-phase" — three surfaces, three numbers.
+- **Framework Support and Multi-Model Consensus copy reframed** — removed hedging ("still works"/"enhancement") in favor of a contribution CTA and "fault-tolerant by design" language. The intent is the same; the tone now matches the actual posture.
+- **GitHub Pages site (`docs/index.html`) brought current with the May 18 README rewrite** — last edit before this batch was Apr 16. Hero now leads with the "broke prod" framing and links to `docs/example-task/`; phase cards renumbered so Consensus is 01 and Requirements is "Input" (file-text icon, not a numbered phase); a new "Install as a Claude Code Plugin (recommended)" section was added with `/mots:*` commands (the plugin install path had been entirely absent from the public site); `AUTO_APPROVE` default corrected from `"none"` to `"all"` and approval-gate copy reframed as optional throughout Overview / Workflow / Philosophy.
+
 ### Removed
 - **Codex plugin manifests** (`.codex-plugin/` and `.agents/`). They were added speculatively in v1.1.0, never linked from the README, never tested in CI, and cost a dual-version-bump at every release. If Codex compatibility comes back as a real demand, the manifests are recoverable from git history.
+- **35-bullet prompt-engineering enumeration in the README** — moved to `docs/prompt-engineering.md` and replaced with a 3-sentence summary plus link, so the README stops scrolling past the techniques the reader is actually trying to find.
 
 ## [1.2.1] - 2026-05-15
 
