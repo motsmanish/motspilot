@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-19
+
 ### Added
 - **Entry-point classification (delivery phase, section 3.1)** — before writing a smoke test, the AI must classify the touched surface (GET-safe action / state-changing HTTP / webhook / CLI / cron / queue / event listener) and pick the matching entry-point shape. The curl-GET template only applies to read-only routes; everything else has a one-line rule for triggering through its real mechanism. Ties back to the testing phase's integration-vs-unit hard rule.
 - **`docs/prompt-engineering.md`** — full catalogue of prompt-engineering patterns used across phases (structure, reasoning gates, output discipline, severity/confidence/consistency tiers, cross-phase contracts). Extracted from the README so the README stays scannable; linked from README, Phases tab of the GitHub Pages site, and CONTRIBUTING.

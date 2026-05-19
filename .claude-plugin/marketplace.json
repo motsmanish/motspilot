@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "mots",
-      "version": "1.2.1",
+      "version": "1.3.0",
       "source": "./",
       "description": "6-phase AI pipeline for shipping features into existing codebases. Multi-model consensus, hard-constraint phase gates, and verification that quotes file:line evidence."
     }
