@@ -1013,10 +1013,8 @@ pick_task() {
         local tdir="${task_dirs[$idx]}"
         local meta_file="${tdir}/meta"
 
-        local status description created
+        local status
         status=$(grep -i "^STATUS=" "$meta_file" | head -1 | cut -d= -f2- || echo "")
-        description=$(grep -i "^DESCRIPTION=" "$meta_file" | head -1 | cut -d= -f2- || echo "")
-        created=$(grep -i "^CREATED=" "$meta_file" | head -1 | cut -d= -f2- | cut -c1-10 || echo "—")
 
         # Phase stage
         local stage

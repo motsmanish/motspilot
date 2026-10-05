@@ -207,6 +207,23 @@ memory_dir() {
     [[ "$output" == *"Task not found: nope"* ]]
 }
 
+@test "status with no --task and no current task uses the picker" {
+    init_with_task
+    : >"$PROJ/.motspilot/current_task"
+    run ms_input 1 status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Select a task:"* ]]
+    [[ "$output" == *"Task: "*"demo"* ]]
+}
+
+@test "picker rejects an out-of-range choice" {
+    init_with_task
+    : >"$PROJ/.motspilot/current_task"
+    run ms_input 9 status
+    [ "$status" -ne 0 ]
+    [[ "$output" != *"Task: "*"demo"* ]]
+}
+
 @test "view prints an artifact via its shortcut" {
     init_with_task
     run ms view req --task=demo
