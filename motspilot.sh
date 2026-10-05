@@ -1373,13 +1373,13 @@ main() {
             local mem_file=""
             # Find the MEMORY.md for the current project
             local sanitized
-            sanitized=$(echo "$PROJECT_ROOT" | sed 's|/|-|g; s|^-||')
+            sanitized=$(echo "$PROJECT_DIR" | sed 's|/|-|g; s|^-||')
             local candidate="$mem_dir/-${sanitized}/memory/MEMORY.md"
             if [[ -f "$candidate" ]]; then
                 mem_file="$candidate"
             else
                 # Fallback: search for it
-                mem_file=$(find "$mem_dir" -name "MEMORY.md" -path "*memory/MEMORY.md" 2>/dev/null | head -1)
+                mem_file=$(find "$mem_dir" -name "MEMORY.md" -path "*memory/MEMORY.md" 2>/dev/null | head -1 || true)
             fi
 
             if [[ -z "$mem_file" || ! -f "$mem_file" ]]; then
@@ -1429,7 +1429,7 @@ main() {
                 age_days=$(((now_epoch - mtime_epoch) / 86400))
                 if ((age_days > 7)); then
                     echo -e "  ${YELLOW}STALE${NC}  $(basename "$topic_file") — ${age_days} days old"
-                    ((stale_count++))
+                    stale_count=$((stale_count + 1))
                 fi
             done
             if ((stale_count == 0)); then
