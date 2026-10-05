@@ -317,6 +317,23 @@ memory_dir() {
     [ -f "$PROJ/.motspilot/workspace/tasks/demo/01_requirements.md" ]
 }
 
+@test "symlinked script file resolves the project and its tool dir" {
+    ln -s "$(cd "$BATS_TEST_DIRNAME/.." && pwd)/motspilot.sh" "$PROJ/motspilot.sh"
+    cd "$PROJ"
+    HOME="$FAKE_HOME" ./motspilot.sh init </dev/null >/dev/null
+    run env HOME="$FAKE_HOME" ./motspilot.sh go --task=demo "demo task" </dev/null
+    [ "$status" -eq 0 ]
+    [ -f "$PROJ/.motspilot/workspace/tasks/demo/01_requirements.md" ]
+}
+
+@test "direct run from the project dir uses CWD as the project" {
+    cd "$PROJ"
+    HOME="$FAKE_HOME" bash "$MOTSPILOT" init </dev/null >/dev/null
+    run env HOME="$FAKE_HOME" bash "$MOTSPILOT" go --task=demo "demo task" </dev/null
+    [ "$status" -eq 0 ]
+    [ -f "$PROJ/.motspilot/workspace/tasks/demo/01_requirements.md" ]
+}
+
 # ─── mem-check ───────────────────────────────────────────────────────────────
 
 @test "mem-check reports OK on a healthy index for this project" {
