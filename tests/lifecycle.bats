@@ -197,7 +197,7 @@ memory_dir() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"demo task"* ]]
     [[ "$output" == *"in_progress"* ]]
-    [[ "$output" == *"architecture"*"bytes"* ]]
+    [[ "$output" == *"architecture"*"(5 bytes)"* ]]
 }
 
 @test "status on a missing task fails" {

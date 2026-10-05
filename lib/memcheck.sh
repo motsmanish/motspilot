@@ -26,8 +26,9 @@ cmd_mem_check() {
     local max_bytes=25000
     local line_count byte_count
 
-    line_count=$(wc -l <"$mem_file")
-    byte_count=$(wc -c <"$mem_file")
+    # $((...)) strips the leading spaces BSD wc (macOS) pads counts with.
+    line_count=$(($(wc -l <"$mem_file")))
+    byte_count=$(($(wc -c <"$mem_file")))
 
     echo -e "  ${BOLD}Memory Index Check${NC}  ${DIM}${mem_file}${NC}"
     echo ""

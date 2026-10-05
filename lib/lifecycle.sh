@@ -104,7 +104,8 @@ show_task_status() {
         local artifact="${tdir}/${PHASE_NUM[$phase]}_${phase}.md"
         if [[ -f "$artifact" ]] && [[ -s "$artifact" ]]; then
             local size
-            size=$(wc -c <"$artifact")
+            # $((...)) strips the leading spaces BSD wc (macOS) pads counts with.
+            size=$(($(wc -c <"$artifact")))
             echo -e "  ${GREEN}✓${NC} ${phase} ${DIM}(${size} bytes)${NC}"
         else
             echo -e "  ${DIM}○${NC} ${phase}"
