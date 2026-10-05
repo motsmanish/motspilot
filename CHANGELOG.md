@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-05
+
+### Fixed
+- **`motspilot.sh mem-check` crashed on every run** — it referenced `$PROJECT_ROOT`, which the script never sets, so `set -u` aborted with "unbound variable". It now uses the resolved project dir. Two follow-on strict-mode bugs in the same command are fixed too: it exited at the first stale topic file instead of listing them all, and it exited silently (without "Could not find MEMORY.md") when no `~/.claude/projects` dir existed.
+- **Fresh clones could not run `./motspilot.sh` directly** — the script was tracked in git as non-executable, so the README's symlink/direct-run setup failed with "Permission denied". Plugin skills were unaffected (they call `bash motspilot.sh`).
+- **macOS direct runs always used the system bash 3.2** — the shebang is now `#!/usr/bin/env bash`, so a Homebrew bash 4+ on `PATH` is picked up, as the script's own bash-version message already advised.
+
+### Changed
+- **`motspilot.sh` split into an entry point + `lib/` modules** — 1491 lines become a 143-line entry point (version check, tool-dir resolution, module loading, command dispatch) and 12 modules under `lib/`. Pure move with no behavior change, verified line-by-line and by the new test suite below.
+- **CI now runs a real lifecycle test suite** — `tests/lifecycle.bats` (37 bats tests: init, go, task-name validation, tasks/status/view, the interactive picker, reset, archive/reactivate, `WORKSPACE_DIR`, all four install shapes, mem-check) replaces the smoke job that only ran `help` and `tasks`, on Ubuntu and macOS. CONTRIBUTING lists the matching local commands. bats is needed only for development, not to use motspilot.
+
+### Removed
+- Unused `description`/`created` meta lookups in the interactive task picker (computed, never displayed).
+
 ## [1.3.0] - 2026-05-19
 
 ### Added
