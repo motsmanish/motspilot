@@ -31,7 +31,7 @@ jobs:
           sh_checker_checkbashisms_enable: false
 
   smoke-test:
-    name: Smoke Test
+    name: Lifecycle Tests
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -45,7 +45,13 @@ jobs:
           echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
       - name: Check bash version
         run: bash --version
-      - name: Run help command
-        run: bash motspilot.sh help
-      - name: Run tasks list
-        run: bash motspilot.sh tasks
+      - name: Install bats
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            brew install bats-core
+          else
+            sudo apt-get update
+            sudo apt-get install -y bats
+          fi
+      - name: Run lifecycle suite
+        run: bats tests/lifecycle.bats

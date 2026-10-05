@@ -157,7 +157,9 @@ If you're porting patterns from a real project into a guide, scrub all identifie
 
 ## Code Style
 
-- Shell script: follow the existing patterns in `motspilot.sh`
+- Shell script: follow the existing patterns in `motspilot.sh`, and before opening a PR run what CI runs:
+  - `bats tests/lifecycle.bats` — end-to-end lifecycle suite ([bats-core](https://github.com/bats-core/bats-core); needed only for development, not for using motspilot). Add a test for any behavior you change.
+  - `shellcheck -S warning motspilot.sh` and `shfmt -i 4 -ci -d motspilot.sh tests/lifecycle.bats`
 - Markdown: keep it readable, use consistent heading levels
 - Framework guides: write like you're explaining to a senior developer who doesn't know this specific framework — not a tutorial, not a reference manual
 
