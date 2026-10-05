@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **macOS: `mem-check` and `status` showed space-padded counts** (`Lines:        1/200`, `(      245 bytes)`) because BSD `wc` pads its output. Counts are now normalized. Caught by the new macOS CI runner on the 1.3.1 push.
+
 ## [1.3.1] - 2026-10-05
 
 ### Fixed
