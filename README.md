@@ -227,7 +227,9 @@ Each phase also receives a **framework guide** (in `prompts/frameworks/`) if one
 
 ```
 motspilot/                              # The tool (symlink, submodule, or clone)
-├── motspilot.sh                        # Shell utility
+├── motspilot.sh                        # Shell utility (entry point + command dispatch)
+├── lib/                                # motspilot.sh modules (config, tasks, lifecycle, picker, …)
+├── tests/lifecycle.bats                # bats lifecycle suite (run in CI)
 ├── PIPELINE_ORCHESTRATOR.md            # Claude Code orchestration instructions
 ├── README.md                           # This file
 ├── CLAUDE.md                           # Quick reference for Claude Code

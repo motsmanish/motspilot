@@ -148,7 +148,9 @@ motspilot/                            # Repo root = plugin root
     archive/SKILL.md                  # Archive: /mots:archive
     reactivate/SKILL.md               # Restore: /mots:reactivate
     view/SKILL.md                     # View: /mots:view
-  motspilot.sh                        # Shell utility (filing system, not engine)
+  motspilot.sh                        # Shell utility (filing system, not engine) — entry point + dispatch
+  lib/                                # motspilot.sh modules, sourced in order (log, workspace, config, …, help)
+  tests/lifecycle.bats                # bats lifecycle suite — run before changing motspilot.sh or lib/
   PIPELINE_ORCHESTRATOR.md            # Claude Code orchestration instructions
   bin/consensus.php                   # Standalone multi-model consensus script (PHP 8+, no framework)
   .env                                # API keys for consensus (ANTHROPIC, OPENAI, GEMINI)
