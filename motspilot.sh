@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###############################################################################
 # motspilot — AI-Powered Dev Pipeline by MOTSTECH
 #
