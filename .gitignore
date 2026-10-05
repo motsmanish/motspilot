@@ -32,5 +32,6 @@ RESEARCH_PUBLIC_RELEASE.md
 /motspilot-data/*
 /.claude
 
-# Personal deferred-work parking lot (private, never committed)
-.todo/
+# Personal deferred-work parking lot — private except the tracked task list
+.todo/*
+!.todo/resume.md
